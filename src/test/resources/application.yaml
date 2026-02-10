@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: start-umami-backend-test
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost/__dummy_jwks__
