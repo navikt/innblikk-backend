@@ -9,6 +9,9 @@ spring:
           audiences:
             - ${AZURE_APP_CLIENT_ID}
 
+server:
+  port: 8080
+
 logging:
   structured:
     format:
