@@ -16,3 +16,7 @@ logging:
   structured:
     format:
       console: logstash
+  level:
+    root: WARN
+    org.springframework.web: WARN
+    no.nav.reops: INFO

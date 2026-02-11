@@ -48,3 +48,9 @@ management:
       base-path: /internal
       exposure:
         include: info, health, metrics, prometheus
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework.web: DEBUG
+    no.nav.reops: DEBUG
