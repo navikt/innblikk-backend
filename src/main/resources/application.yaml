@@ -30,11 +30,11 @@ spring:
 springdoc:
   api-docs:
     enabled: true
-    path: /internal/openapi
+    path: /api/openapi
   swagger-ui:
     enabled: true
-    path: /internal/swagger-ui
-    url: /internal/openapi
+    path: /api/swagger-ui
+    url: /api/openapi
 
 server:
   http2:
