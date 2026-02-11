@@ -14,6 +14,7 @@ class SecurityConfig {
         http.csrf { it.disable() }.authorizeHttpRequests { auth ->
             auth.requestMatchers("/api/swagger-ui/**").permitAll()
                 .requestMatchers("/api/openapi/**").permitAll()
+                .requestMatchers("/internal/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
         }.oauth2ResourceServer { rs ->
