@@ -1,9 +1,9 @@
 plugins {
 	id("org.springframework.boot") version "4.0.2"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("jvm") version "2.3.0"
-	kotlin("plugin.spring") version "2.3.0"
-	kotlin("plugin.jpa") version "2.3.0"
+	kotlin("jvm") version "2.3.10"
+	kotlin("plugin.spring") version "2.3.10"
+	kotlin("plugin.jpa") version "2.3.10"
 }
 
 group = "no.nav.reops"
@@ -45,7 +45,7 @@ dependencies {
 	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
 	testImplementation("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.assertj:assertj-core")
-	testImplementation("io.zonky.test:embedded-postgres:2.1.0")
+	testImplementation("io.zonky.test:embedded-postgres:2.2.0")
 	testImplementation("io.zonky.test:embedded-database-spring-test:2.7.1")
 	testImplementation("org.postgresql:postgresql")
 	testImplementation("org.flywaydb.flyway-test-extensions:flyway-spring-test:10.0.0")
