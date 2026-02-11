@@ -14,6 +14,7 @@
 2. Start application with profile `local`:  
    `./gradlew bootRun -Dspring-boot.run.profiles=local`
 3. Gå til swagger-doc `http://localhost:8086/api/swagger-ui/index.html#/`
+4. Optional, Bruno collection https://github.com/navikt/reops-meta/tree/main/tooling/researchops-bruno/start-umami-backend
 
 ### Request token from the mock server
 ```
