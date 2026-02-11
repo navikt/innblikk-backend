@@ -30,19 +30,19 @@ class RepositorySmokeTest(
     private val entityManager: EntityManager,
 ) {
 
-    private fun createProject(name: String = "project-1"): ProjectEntity =
+    private fun createProject(name: String = "project"): ProjectEntity =
         projectRepository.save(ProjectEntity(name = name)).also {
             entityManager.flush()
             entityManager.clear()
         }
 
-    private fun createDashboard(project: ProjectEntity, name: String = "dashboard-1"): DashboardEntity =
+    private fun createDashboard(project: ProjectEntity, name: String = "dashboard"): DashboardEntity =
         dashboardRepository.save(DashboardEntity(project = project, name = name)).also {
             entityManager.flush()
             entityManager.clear()
         }
 
-    private fun createGraph(dashboard: DashboardEntity, name: String = "graph-1"): GraphEntity =
+    private fun createGraph(dashboard: DashboardEntity, name: String = "graph"): GraphEntity =
         graphRepository.save(GraphEntity(dashboard = dashboard, name = name)).also {
             entityManager.flush()
             entityManager.clear()
@@ -60,7 +60,7 @@ class RepositorySmokeTest(
 
     @Test
     fun `dashboard repository can save and read`() {
-        val project = createProject("p")
+        val project = createProject("project")
 
         val saved = dashboardRepository.save(
             DashboardEntity(
@@ -77,8 +77,8 @@ class RepositorySmokeTest(
 
     @Test
     fun `graph repository can save and read`() {
-        val project = createProject("p")
-        val dashboard = createDashboard(project, "d")
+        val project = createProject("project")
+        val dashboard = createDashboard(project, "dashboard")
 
         val saved = graphRepository.save(
             GraphEntity(
@@ -95,9 +95,9 @@ class RepositorySmokeTest(
 
     @Test
     fun `query repository can save and read`() {
-        val project = createProject("p")
-        val dashboard = createDashboard(project, "d")
-        val graph = createGraph(dashboard, "g")
+        val project = createProject("project")
+        val dashboard = createDashboard(project, "dashboard")
+        val graph = createGraph(dashboard, "graph")
 
         val saved = queryRepository.save(
             QueryEntity(

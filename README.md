@@ -13,7 +13,8 @@
 1. Start docker-compose in project reops-event-proxy under .compose `docker-compose up`
 2. Start application with profile `local`:  
    `./gradlew bootRun -Dspring-boot.run.profiles=local`
-
+3. See the app på `http://localhost:8086`
+4. 
 ### Request token from the mock server
 ```
 curl -s -X POST "http://localhost:8080/issueissue/token" \

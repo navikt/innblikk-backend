@@ -7,9 +7,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://localhost:14332/start-umami
-    username: start-umami
-    password: start-umami
+    url: jdbc:postgresql://localhost:14332/start-umami?user=start-umami&password=start-umami
     driver-class-name: org.postgresql.Driver
     hikari:
       housekeeping-period-ms: 30000
@@ -36,7 +34,7 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /internal/swagger-ui
-    config-url: /internal/openapi
+    url: /internal/openapi
 
 server:
   http2:

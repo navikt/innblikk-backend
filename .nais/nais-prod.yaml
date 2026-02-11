@@ -28,6 +28,30 @@ spec:
     requests:
       cpu: "200m"
       memory: 512Mi
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_18
+        tier: db-custom-1-4096
+        diskType: SSD
+        diskSize: 10
+        diskAutoresize: true
+        autoBackupHour: 3
+        databases:
+          - name: start-umami
+        maintenance:
+          day: 1
+          hour: 4
+        cascadingDelete: false
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      tenant: nav.no
+    sidecar:
+      enabled: true
+      autoLogin: true
+      autoLoginIgnorePaths:
+        - /internal/
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
