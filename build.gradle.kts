@@ -70,3 +70,15 @@ tasks.withType<Test> {
 tasks.named<Jar>("bootJar") {
 	archiveFileName.set("app.jar")
 }
+
+tasks.register<Exec>("generateChangelog") {
+	group = "documentation"
+	description = "Generates CHANGELOG.md from Conventional Commits using git-cliff (no versioning)."
+	commandLine(
+		"bash", "-lc",
+		"""
+        set -euo pipefail
+        git cliff --config cliff.toml --output CHANGELOG.md
+        """.trimIndent()
+	)
+}

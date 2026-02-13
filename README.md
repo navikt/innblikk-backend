@@ -27,3 +27,15 @@ curl -s -X POST "http://localhost:8080/issueissue/token" \
 ```
 Authorization: Bearer token
 ```
+
+### Testing CHANGELOG using conventional commits (eventually automate this in CI/CD pipeline)
+Install first git-cliff
+```
+brew install git-cliff 
+```
+Then run the following command in the project root:
+```
+./gradlew generateChangelog
+```
+Generates a CHANGELOG.md file based on the commit history and the conventional commit messages.
+Configure "cliff.toml"
