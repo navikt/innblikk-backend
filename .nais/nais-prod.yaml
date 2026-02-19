@@ -54,6 +54,10 @@ spec:
       autoLogin: true
       autoLoginIgnorePaths:
         - /internal/
+  accessPolicy:
+    inbound:
+      rules:
+        - application: umami-start
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
