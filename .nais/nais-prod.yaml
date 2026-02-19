@@ -52,9 +52,11 @@ spec:
       tenant: nav.no
     sidecar:
       enabled: true
-      autoLogin: true
-      autoLoginIgnorePaths:
-        - /internal/
+      autoLogin: false
+  accessPolicy:
+    inbound:
+      rules:
+        - application: umami-start
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
