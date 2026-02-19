@@ -20,6 +20,7 @@ spec:
     cpuThresholdPercentage: 80
   ingresses:
     - "https://start-umami-backend.ansatt.dev.nav.no"
+    - "https://start-umami-backend.intern.dev.nav.no"
   prometheus:
     enabled: true
     path: /internal/prometheus
