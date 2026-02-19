@@ -14,6 +14,8 @@ class QueryService(
 ) {
 
     fun createQuery(graphId: Long, request: CreateQueryRequest): QueryDto {
+        validateSelectOnly(request.sqlText)
+
         val graph = graphRepository.findById(graphId).orElseThrow {
             IllegalArgumentException("Graph $graphId not found")
         }
@@ -36,6 +38,8 @@ class QueryService(
     fun getQueryById(graphId: Long, id: Long): QueryDto? = queryRepository.findByIdAndGraphId(id, graphId)?.toDto()
 
     fun updateQuery(graphId: Long, id: Long, request: UpdateQueryRequest): QueryDto? {
+        validateSelectOnly(request.sqlText)
+
         val entity = queryRepository.findByIdAndGraphId(id, graphId) ?: return null
 
         if (entity.name != request.name && queryRepository.existsByGraphIdAndName(graphId, request.name)) {
@@ -56,6 +60,23 @@ class QueryService(
             changeService.createChange(id, EntityType.QUERY, ChangeType.DELETED)
         }
         return true
+    }
+
+    private fun validateSelectOnly(sqlText: String) {
+        val trimmed = sqlText.trim()
+        if (trimmed.isEmpty()) {
+            throw IllegalArgumentException("Query sqlText must not be blank")
+        }
+
+        // Disallow multiple statements; also blocks trivial injection like `select 1; drop table x`.
+        if (trimmed.contains(';')) {
+            throw IllegalArgumentException("Only single-statement SELECT queries are allowed")
+        }
+
+        // Allow-list: SELECT or CTEs starting with WITH.
+        if (!(trimmed.startsWith("select", ignoreCase = true) || trimmed.startsWith("with", ignoreCase = true))) {
+            throw IllegalArgumentException("Only SELECT queries are allowed")
+        }
     }
 
     private fun QueryEntity.toDto() = QueryDto(

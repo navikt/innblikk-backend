@@ -96,6 +96,22 @@ class QueryServiceTest {
     }
 
     @Test
+    fun `createQuery throws when sql is not select`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "update users set a=1"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only SELECT queries are allowed")
+    }
+
+    @Test
+    fun `createQuery throws when sql contains multiple statements`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "select 1; drop table x"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only single-statement SELECT queries are allowed")
+    }
+
+    @Test
     fun `getAllQuery maps entities to dto`() {
         val graph = graph(id = 1L)
         val first = QueryEntity(
@@ -178,6 +194,14 @@ class QueryServiceTest {
     }
 
     @Test
+    fun `updateQuery throws when sql is not select`() {
+        assertThatThrownBy {
+            queryService.updateQuery(1L, 10L, UpdateQueryRequest("old", "delete from users"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only SELECT queries are allowed")
+    }
+
+    @Test
     fun `updateQuery saves changes and returns dto`() {
         val graph = graph(id = 1L)
         val entity = QueryEntity(
@@ -233,6 +257,53 @@ class QueryServiceTest {
         assertThat(result).isTrue()
     }
 
+    @Test
+    fun `createQuery allows with cte select`() {
+        val graph = graph(id = 1L)
+        val updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6)
+        val savedEntity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "query",
+            sqlText = "with cte as (select 1 as a) select a from cte",
+            updatedAt = updatedAt,
+        )
+
+        whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
+        whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+
+        val result = queryService.createQuery(
+            1L,
+            CreateQueryRequest("query", "with cte as (select 1 as a) select a from cte"),
+        )
+
+        assertThat(result.sqlText).isEqualTo("with cte as (select 1 as a) select a from cte")
+    }
+
+    @Test
+    fun `updateQuery allows with cte select`() {
+        val graph = graph(id = 1L)
+        val entity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "old",
+            sqlText = "select 1",
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(queryRepository.findByIdAndGraphId(10L, 1L)).thenReturn(entity)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(entity)
+
+        val result = queryService.updateQuery(
+            1L,
+            10L,
+            UpdateQueryRequest("old", "with cte as (select 1 as a) select a from cte"),
+        )
+
+        assertThat(result).isNotNull
+        assertThat(result!!.sqlText).isEqualTo("with cte as (select 1 as a) select a from cte")
+    }
+
     private fun graph(id: Long) = GraphEntity(
         id = id,
         dashboard = dashboard(id = 1L),
@@ -256,4 +327,3 @@ class QueryServiceTest {
         updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
     )
 }
-
