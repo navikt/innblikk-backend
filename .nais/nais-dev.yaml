@@ -54,6 +54,7 @@ spec:
       autoLogin: true
       autoLoginIgnorePaths:
         - /internal/
+        - /api/**
   accessPolicy:
     inbound:
       rules:
