@@ -51,10 +51,7 @@ spec:
       tenant: nav.no
     sidecar:
       enabled: true
-      autoLogin: true
-      autoLoginIgnorePaths:
-        - /internal/
-        - /api/**
+      autoLogin: false
   accessPolicy:
     inbound:
       rules:
