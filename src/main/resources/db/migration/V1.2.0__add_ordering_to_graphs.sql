@@ -1,0 +1,2 @@
+ALTER TABLE graphs ADD COLUMN ordering INT NOT NULL DEFAULT 0;
+

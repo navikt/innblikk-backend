@@ -22,8 +22,15 @@ class GraphService(
             throw IllegalArgumentException("Graph with name '${request.name}' already exists in dashboard $dashboardId")
         }
 
+        val maxOrdering = graphRepository.findAllByDashboardIdOrderByOrderingAsc(dashboardId)
+            .maxOfOrNull { it.ordering } ?: -1
+
         val entity = GraphEntity(
-            dashboard = dashboard, name = request.name, graphType = request.graphType, width = request.width ?: 50
+            dashboard = dashboard,
+            name = request.name,
+            graphType = request.graphType,
+            width = request.width ?: 50,
+            ordering = maxOrdering + 1,
         )
 
         return graphRepository.save(entity).toDto().also {
@@ -32,7 +39,7 @@ class GraphService(
     }
 
     fun getAllGraphs(dashboardId: Long): List<GraphDto> =
-        graphRepository.findAllByDashboardId(dashboardId).map { it.toDto() }
+        graphRepository.findAllByDashboardIdOrderByOrderingAsc(dashboardId).map { it.toDto() }
 
     fun getGraphById(dashboardId: Long, id: Long): GraphDto? =
         graphRepository.findByIdAndDashboardId(id, dashboardId)?.toDto()
@@ -53,6 +60,26 @@ class GraphService(
         }
     }
 
+    fun updateOrdering(dashboardId: Long, entries: List<GraphOrderingEntry>): List<GraphDto> {
+        if (!dashboardRepository.existsById(dashboardId)) {
+            throw IllegalArgumentException("Dashboard $dashboardId not found")
+        }
+
+        val ids = entries.map { it.id }
+        val entities = graphRepository.findAllByDashboardIdAndIdIn(dashboardId, ids).associateBy { it.id }
+
+        val missingIds = ids.filter { it !in entities }
+        if (missingIds.isNotEmpty()) {
+            throw IllegalArgumentException("Graphs not found in dashboard $dashboardId: $missingIds")
+        }
+
+        entries.forEach { entry ->
+            entities[entry.id]!!.ordering = entry.ordering
+        }
+
+        return graphRepository.saveAll(entities.values).map { it.toDto() }.sortedBy { it.ordering }
+    }
+
     fun deleteGraph(dashboardId: Long, id: Long): Boolean {
         val entity = graphRepository.findByIdAndDashboardId(id, dashboardId) ?: return false
         graphRepository.delete(entity).also {
@@ -67,6 +94,7 @@ class GraphService(
         name = name,
         graphType = graphType,
         width = width,
+        ordering = ordering,
         updatedAt = updatedAt,
     )
 }

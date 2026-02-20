@@ -3,6 +3,8 @@ package no.nav.reops.graph
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.Enumerated
+import jakarta.persistence.EnumType
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -32,9 +34,11 @@ class GraphEntity(
 
     @Column(name = "name", nullable = false) var name: String,
 
-    @Column(name = "graph_type") var graphType: String? = null,
+    @Enumerated(EnumType.STRING) @Column(name = "graph_type") var graphType: GraphType? = null,
 
     @Column(name = "width", nullable = false) var width: Int = 50,
+
+    @Column(name = "ordering", nullable = false) var ordering: Int = 0,
 
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {

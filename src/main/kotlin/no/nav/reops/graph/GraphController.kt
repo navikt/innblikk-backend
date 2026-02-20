@@ -58,4 +58,14 @@ class GraphController(private val graphService: GraphService) {
         val deleted = graphService.deleteGraph(dashboardId, id)
         return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
+
+    @PutMapping("/ordering")
+    fun updateOrdering(
+        @PathVariable projectId: Long,
+        @PathVariable dashboardId: Long,
+        @RequestBody entries: List<GraphOrderingEntry>,
+    ): ResponseEntity<List<GraphDto>> {
+        val result = graphService.updateOrdering(dashboardId, entries)
+        return ResponseEntity.ok(result)
+    }
 }
