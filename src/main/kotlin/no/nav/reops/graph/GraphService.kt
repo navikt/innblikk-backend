@@ -23,7 +23,7 @@ class GraphService(
         }
 
         val entity = GraphEntity(
-            dashboard = dashboard, name = request.name, graphType = request.graphType
+            dashboard = dashboard, name = request.name, graphType = request.graphType, width = request.width ?: 50
         )
 
         return graphRepository.save(entity).toDto().also {
@@ -46,6 +46,7 @@ class GraphService(
 
         entity.name = request.name
         entity.graphType = request.graphType
+        entity.width = request.width ?: entity.width
 
         return graphRepository.save(entity).toDto().also {
             changeService.createChange(it.id, EntityType.GRAPH, ChangeType.UPDATED)
@@ -65,6 +66,7 @@ class GraphService(
         dashboardId = requireNotNull(dashboard.id),
         name = name,
         graphType = graphType,
+        width = width,
         updatedAt = updatedAt,
     )
 }

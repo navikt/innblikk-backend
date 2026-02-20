@@ -7,15 +7,18 @@ data class GraphDto(
     val dashboardId: Long,
     val name: String,
     val graphType: String?,
+    val width: Int,
     val updatedAt: LocalDateTime,
 )
 
 data class CreateGraphRequest(
     val name: String,
     val graphType: String?,
+    val width: Int? = null,
 )
 
 data class UpdateGraphRequest(
     val name: String,
     val graphType: String?,
+    val width: Int? = null,
 )

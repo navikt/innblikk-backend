@@ -34,6 +34,8 @@ class GraphEntity(
 
     @Column(name = "graph_type") var graphType: String? = null,
 
+    @Column(name = "width", nullable = false) var width: Int = 50,
+
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     @OneToMany(
