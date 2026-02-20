@@ -59,7 +59,7 @@ class GraphController(private val graphService: GraphService) {
         return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
 
-    @PutMapping("/ordering")
+    @PostMapping("/ordering")
     fun updateOrdering(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
