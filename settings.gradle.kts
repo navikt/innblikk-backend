@@ -1,1 +1,1 @@
-rootProject.name = "start-umami-backend"
+rootProject.name = "innblikk-backend"

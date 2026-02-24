@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import no.nav.reops.graph.GraphEntity
+import no.nav.reops.graphcategory.GraphCategoryEntity
 import no.nav.reops.project.ProjectEntity
 import java.time.LocalDateTime
 
@@ -42,5 +42,5 @@ class DashboardEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    var graphs: MutableSet<GraphEntity> = mutableSetOf()
+    var categories: MutableSet<GraphCategoryEntity> = mutableSetOf()
 }

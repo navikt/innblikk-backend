@@ -7,24 +7,27 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @Tag(name = "Graph")
-@RequestMapping("/api/projects/{projectId}/dashboards/{dashboardId}/graphs")
+@RequestMapping("/api/projects/{projectId}/dashboards/{dashboardId}/categories/{categoryId}/graphs")
 class GraphController(private val graphService: GraphService) {
 
     @PostMapping
     fun createGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @RequestBody request: CreateGraphRequest,
     ): ResponseEntity<GraphDto> {
-        val graph = graphService.createGraph(dashboardId, request)
+        val graph = graphService.createGraph(categoryId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(graph)
     }
 
     @GetMapping
     fun getAllGraphs(
-        @PathVariable projectId: Long, @PathVariable dashboardId: Long
+        @PathVariable projectId: Long,
+        @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
     ): ResponseEntity<List<GraphDto>> {
-        val graph = graphService.getAllGraphs(dashboardId)
+        val graph = graphService.getAllGraphs(categoryId)
         return ResponseEntity.ok(graph)
     }
 
@@ -32,9 +35,10 @@ class GraphController(private val graphService: GraphService) {
     fun getGraphById(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable id: Long,
     ): ResponseEntity<GraphDto> {
-        val graph = graphService.getGraphById(dashboardId, id)
+        val graph = graphService.getGraphById(categoryId, id)
         return if (graph != null) ResponseEntity.ok(graph) else ResponseEntity.notFound().build()
     }
 
@@ -42,10 +46,11 @@ class GraphController(private val graphService: GraphService) {
     fun updateGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable id: Long,
         @RequestBody request: UpdateGraphRequest,
     ): ResponseEntity<GraphDto> {
-        val updated = graphService.updateGraph(dashboardId, id, request)
+        val updated = graphService.updateGraph(categoryId, id, request)
         return if (updated != null) ResponseEntity.ok(updated) else ResponseEntity.notFound().build()
     }
 
@@ -53,9 +58,10 @@ class GraphController(private val graphService: GraphService) {
     fun deleteGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable id: Long,
     ): ResponseEntity<Void> {
-        val deleted = graphService.deleteGraph(dashboardId, id)
+        val deleted = graphService.deleteGraph(categoryId, id)
         return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
 
@@ -63,9 +69,10 @@ class GraphController(private val graphService: GraphService) {
     fun updateOrdering(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @RequestBody entries: List<GraphOrderingEntry>,
     ): ResponseEntity<List<GraphDto>> {
-        val result = graphService.updateOrdering(dashboardId, entries)
+        val result = graphService.updateOrdering(categoryId, entries)
         return ResponseEntity.ok(result)
     }
 }

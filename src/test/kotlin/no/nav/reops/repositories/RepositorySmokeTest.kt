@@ -6,6 +6,8 @@ import no.nav.reops.dashboard.DashboardEntity
 import no.nav.reops.dashboard.DashboardRepository
 import no.nav.reops.graph.GraphEntity
 import no.nav.reops.graph.GraphRepository
+import no.nav.reops.graphcategory.GraphCategoryEntity
+import no.nav.reops.graphcategory.GraphCategoryRepository
 import no.nav.reops.project.ProjectEntity
 import no.nav.reops.project.ProjectRepository
 import no.nav.reops.query.QueryEntity
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 class RepositorySmokeTest(
     private val projectRepository: ProjectRepository,
     private val dashboardRepository: DashboardRepository,
+    private val graphCategoryRepository: GraphCategoryRepository,
     private val graphRepository: GraphRepository,
     private val queryRepository: QueryRepository,
     private val entityManager: EntityManager,
@@ -42,8 +45,14 @@ class RepositorySmokeTest(
             entityManager.clear()
         }
 
-    private fun createGraph(dashboard: DashboardEntity, name: String = "graph"): GraphEntity =
-        graphRepository.save(GraphEntity(dashboard = dashboard, name = name)).also {
+    private fun createCategory(dashboard: DashboardEntity, name: String = "category"): GraphCategoryEntity =
+        graphCategoryRepository.save(GraphCategoryEntity(dashboard = dashboard, name = name)).also {
+            entityManager.flush()
+            entityManager.clear()
+        }
+
+    private fun createGraph(category: GraphCategoryEntity, name: String = "graph"): GraphEntity =
+        graphRepository.save(GraphEntity(category = category, name = name)).also {
             entityManager.flush()
             entityManager.clear()
         }
@@ -76,13 +85,32 @@ class RepositorySmokeTest(
     }
 
     @Test
-    fun `graph repository can save and read`() {
+    fun `graph category repository can save and read`() {
         val project = createProject("project")
         val dashboard = createDashboard(project, "dashboard")
 
+        val saved = graphCategoryRepository.save(
+            GraphCategoryEntity(
+                dashboard = dashboard,
+                name = "category",
+            )
+        )
+        assertThat(saved.id).isNotNull()
+
+        val loaded = graphCategoryRepository.findById(saved.id!!)
+        assertThat(loaded).isPresent
+        assertThat(loaded.get().name).isEqualTo("category")
+    }
+
+    @Test
+    fun `graph repository can save and read`() {
+        val project = createProject("project")
+        val dashboard = createDashboard(project, "dashboard")
+        val category = createCategory(dashboard, "category")
+
         val saved = graphRepository.save(
             GraphEntity(
-                dashboard = dashboard,
+                category = category,
                 name = "graph",
             )
         )
@@ -97,7 +125,8 @@ class RepositorySmokeTest(
     fun `query repository can save and read`() {
         val project = createProject("project")
         val dashboard = createDashboard(project, "dashboard")
-        val graph = createGraph(dashboard, "graph")
+        val category = createCategory(dashboard, "category")
+        val graph = createGraph(category, "graph")
 
         val saved = queryRepository.save(
             QueryEntity(

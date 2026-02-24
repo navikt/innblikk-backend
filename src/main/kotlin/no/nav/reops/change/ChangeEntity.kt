@@ -29,5 +29,5 @@ enum class ChangeType {
 }
 
 enum class EntityType {
-    PROJECT, DASHBOARD, GRAPH, QUERY
+    PROJECT, DASHBOARD, GRAPH_CATEGORY, GRAPH, QUERY
 }

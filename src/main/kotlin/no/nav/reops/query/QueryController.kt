@@ -7,13 +7,14 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @Tag(name = "Query")
-@RequestMapping("/api/projects/{projectId}/dashboards/{dashboardId}/graphs/{graphId}/queries")
+@RequestMapping("/api/projects/{projectId}/dashboards/{dashboardId}/categories/{categoryId}/graphs/{graphId}/queries")
 class QueryController(private val queryService: QueryService) {
 
     @PostMapping
     fun createGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable graphId: Long,
         @RequestBody request: CreateQueryRequest,
     ): ResponseEntity<QueryDto> {
@@ -23,7 +24,10 @@ class QueryController(private val queryService: QueryService) {
 
     @GetMapping
     fun getAllGraphs(
-        @PathVariable projectId: Long, @PathVariable dashboardId: Long, @PathVariable graphId: Long
+        @PathVariable projectId: Long,
+        @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
+        @PathVariable graphId: Long,
     ): ResponseEntity<List<QueryDto>> {
         val query = queryService.getAllQuery(graphId)
         return ResponseEntity.ok(query)
@@ -33,6 +37,7 @@ class QueryController(private val queryService: QueryService) {
     fun getGraphById(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable graphId: Long,
         @PathVariable id: Long,
     ): ResponseEntity<QueryDto> {
@@ -44,6 +49,7 @@ class QueryController(private val queryService: QueryService) {
     fun updateGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable graphId: Long,
         @PathVariable id: Long,
         @RequestBody request: UpdateQueryRequest,
@@ -56,6 +62,7 @@ class QueryController(private val queryService: QueryService) {
     fun deleteGraph(
         @PathVariable projectId: Long,
         @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
         @PathVariable graphId: Long,
         @PathVariable id: Long,
     ): ResponseEntity<Void> {

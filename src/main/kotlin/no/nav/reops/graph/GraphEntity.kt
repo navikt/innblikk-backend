@@ -14,7 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import no.nav.reops.dashboard.DashboardEntity
+import no.nav.reops.graphcategory.GraphCategoryEntity
 import no.nav.reops.query.QueryEntity
 import java.time.LocalDateTime
 
@@ -22,15 +22,15 @@ import java.time.LocalDateTime
 @Table(
     name = "graphs",
     uniqueConstraints = [
-        UniqueConstraint(name = "uq_graphs_dashboard_name", columnNames = ["dashboard_id", "name"]),
+        UniqueConstraint(name = "uq_graphs_category_name", columnNames = ["category_id", "name"]),
     ],
 )
 class GraphEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(
-        name = "dashboard_id", nullable = false
-    ) var dashboard: DashboardEntity,
+        name = "category_id", nullable = false
+    ) var category: GraphCategoryEntity,
 
     @Column(name = "name", nullable = false) var name: String,
 

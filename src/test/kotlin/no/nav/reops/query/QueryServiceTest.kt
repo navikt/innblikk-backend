@@ -7,6 +7,7 @@ import no.nav.reops.dashboard.DashboardEntity
 import no.nav.reops.graph.GraphEntity
 import no.nav.reops.graph.GraphRepository
 import no.nav.reops.graph.GraphType
+import no.nav.reops.graphcategory.GraphCategoryEntity
 import no.nav.reops.project.ProjectEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -307,9 +308,17 @@ class QueryServiceTest {
 
     private fun graph(id: Long) = GraphEntity(
         id = id,
-        dashboard = dashboard(id = 1L),
+        category = category(id = 1L),
         name = "graph",
         graphType = GraphType.LINE,
+        updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+    )
+
+    private fun category(id: Long) = GraphCategoryEntity(
+        id = id,
+        dashboard = dashboard(id = 1L),
+        name = "category",
+        ordering = 0,
         updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
     )
 

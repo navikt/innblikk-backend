@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 data class GraphDto(
     val id: Long,
-    val dashboardId: Long,
+    val categoryId: Long,
     val name: String,
     val graphType: GraphType?,
     val width: Int,

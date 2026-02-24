@@ -19,8 +19,8 @@ spec:
     max: 2
     cpuThresholdPercentage: 80
   ingresses:
-    - "https://start-umami-backend.ansatt.nav.no"
-    - "https://start-umami-backend.intern.nav.no"
+    - "https://innblikk-backend.ansatt.nav.no"
+    - "https://innblikk-backend.intern.nav.no"
   prometheus:
     enabled: true
     path: /internal/prometheus

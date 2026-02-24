@@ -4,7 +4,8 @@ import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import no.nav.reops.dashboard.DashboardEntity
-import no.nav.reops.dashboard.DashboardRepository
+import no.nav.reops.graphcategory.GraphCategoryEntity
+import no.nav.reops.graphcategory.GraphCategoryRepository
 import no.nav.reops.project.ProjectEntity
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -27,7 +28,7 @@ class GraphServiceTest {
     private lateinit var graphRepository: GraphRepository
 
     @Mock
-    private lateinit var dashboardRepository: DashboardRepository
+    private lateinit var graphCategoryRepository: GraphCategoryRepository
 
     @Mock
     private lateinit var changeService: ChangeService
@@ -36,25 +37,26 @@ class GraphServiceTest {
 
     @BeforeEach
     fun setUp() {
-        graphService = GraphService(graphRepository, dashboardRepository, changeService)
+        graphService = GraphService(graphRepository, graphCategoryRepository, changeService)
     }
 
     @Test
     fun `createGraph saves entity and returns dto`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6)
         val savedEntity = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "graph",
             graphType = GraphType.LINE,
             updatedAt = updatedAt,
         )
 
-        whenever(dashboardRepository.findById(1L)).thenReturn(Optional.of(dashboard))
-        whenever(graphRepository.existsByDashboardIdAndName(1L, "graph")).thenReturn(false)
-        whenever(graphRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+        whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
+        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
         val result = graphService.createGraph(1L, CreateGraphRequest("graph", GraphType.LINE))
@@ -64,59 +66,61 @@ class GraphServiceTest {
         assertThat(captor.firstValue.name).isEqualTo("graph")
         assertThat(captor.firstValue.graphType).isEqualTo(GraphType.LINE)
         assertThat(captor.firstValue.ordering).isEqualTo(0)
-        assertThat(captor.firstValue.dashboard).isEqualTo(dashboard)
+        assertThat(captor.firstValue.category).isEqualTo(category)
 
         verify(changeService).createChange(10L, EntityType.GRAPH, ChangeType.CREATED)
 
         assertThat(result.id).isEqualTo(10L)
-        assertThat(result.dashboardId).isEqualTo(1L)
+        assertThat(result.categoryId).isEqualTo(1L)
         assertThat(result.name).isEqualTo("graph")
         assertThat(result.graphType).isEqualTo(GraphType.LINE)
         assertThat(result.updatedAt).isEqualTo(updatedAt)
     }
 
     @Test
-    fun `createGraph throws when dashboard is missing`() {
-        whenever(dashboardRepository.findById(99L)).thenReturn(Optional.empty())
+    fun `createGraph throws when category is missing`() {
+        whenever(graphCategoryRepository.findById(99L)).thenReturn(Optional.empty())
 
         assertThatThrownBy {
             graphService.createGraph(99L, CreateGraphRequest("graph", null))
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("Dashboard 99 not found")
+            .hasMessage("Category 99 not found")
     }
 
     @Test
-    fun `createGraph throws when name exists in dashboard`() {
+    fun `createGraph throws when name exists in category`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
-        whenever(dashboardRepository.findById(1L)).thenReturn(Optional.of(dashboard))
-        whenever(graphRepository.existsByDashboardIdAndName(1L, "graph")).thenReturn(true)
+        val category = category(dashboard = dashboard, id = 1L)
+        whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(true)
 
         assertThatThrownBy {
             graphService.createGraph(1L, CreateGraphRequest("graph", null))
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("Graph with name 'graph' already exists in dashboard 1")
+            .hasMessage("Graph with name 'graph' already exists in category 1")
     }
 
     @Test
     fun `getAllGraphs maps entities to dto`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val first = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "first",
             graphType = GraphType.LINE,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         val second = GraphEntity(
             id = 11L,
-            dashboard = dashboard,
+            category = category,
             name = "second",
             graphType = null,
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
-        whenever(graphRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
+        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
 
         val result = graphService.getAllGraphs(1L)
 
@@ -129,25 +133,26 @@ class GraphServiceTest {
     fun `getGraphById returns dto when found`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val entity = GraphEntity(
             id = 12L,
-            dashboard = dashboard,
+            category = category,
             name = "graph",
             graphType = GraphType.BAR,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
-        whenever(graphRepository.findByIdAndDashboardId(12L, 1L)).thenReturn(entity)
+        whenever(graphRepository.findByIdAndCategoryId(12L, 1L)).thenReturn(entity)
 
         val result = graphService.getGraphById(1L, 12L)
 
         assertThat(result).isNotNull
         assertThat(result!!.id).isEqualTo(12L)
-        assertThat(result.dashboardId).isEqualTo(1L)
+        assertThat(result.categoryId).isEqualTo(1L)
     }
 
     @Test
     fun `getGraphById returns null when missing`() {
-        whenever(graphRepository.findByIdAndDashboardId(12L, 1L)).thenReturn(null)
+        whenever(graphRepository.findByIdAndCategoryId(12L, 1L)).thenReturn(null)
 
         val result = graphService.getGraphById(1L, 12L)
 
@@ -156,7 +161,7 @@ class GraphServiceTest {
 
     @Test
     fun `updateGraph returns null when graph missing`() {
-        whenever(graphRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(null)
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(null)
 
         val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("name", null))
 
@@ -164,38 +169,40 @@ class GraphServiceTest {
     }
 
     @Test
-    fun `updateGraph throws when name exists in dashboard`() {
+    fun `updateGraph throws when name exists in category`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val entity = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "old",
             graphType = null,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
-        whenever(graphRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
-        whenever(graphRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(true)
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(true)
 
         assertThatThrownBy {
             graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", null))
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("Graph with name 'new' already exists in dashboard 1")
+            .hasMessage("Graph with name 'new' already exists in category 1")
     }
 
     @Test
     fun `updateGraph saves changes and returns dto`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val entity = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "old",
             graphType = GraphType.BAR,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
-        whenever(graphRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
-        whenever(graphRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(false)
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
 
         val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", GraphType.LINE))
@@ -214,7 +221,7 @@ class GraphServiceTest {
 
     @Test
     fun `deleteGraph returns false when missing`() {
-        whenever(graphRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(null)
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(null)
 
         val result = graphService.deleteGraph(1L, 10L)
 
@@ -225,14 +232,15 @@ class GraphServiceTest {
     fun `deleteGraph deletes entity and records change`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val entity = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "graph",
             graphType = null,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
-        whenever(graphRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
 
         val result = graphService.deleteGraph(1L, 10L)
 
@@ -245,9 +253,10 @@ class GraphServiceTest {
     fun `createGraph assigns next ordering value`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val existingGraph = GraphEntity(
             id = 5L,
-            dashboard = dashboard,
+            category = category,
             name = "existing",
             graphType = null,
             ordering = 3,
@@ -255,16 +264,16 @@ class GraphServiceTest {
         )
         val savedEntity = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "new",
             graphType = null,
             ordering = 4,
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
 
-        whenever(dashboardRepository.findById(1L)).thenReturn(Optional.of(dashboard))
-        whenever(graphRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(false)
-        whenever(graphRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingGraph))
+        whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
+        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingGraph))
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
         graphService.createGraph(1L, CreateGraphRequest("new", null))
@@ -275,33 +284,34 @@ class GraphServiceTest {
     }
 
     @Test
-    fun `updateOrdering throws when dashboard not found`() {
-        whenever(dashboardRepository.existsById(99L)).thenReturn(false)
+    fun `updateOrdering throws when category not found`() {
+        whenever(graphCategoryRepository.existsById(99L)).thenReturn(false)
 
         assertThatThrownBy {
             graphService.updateOrdering(99L, listOf(GraphOrderingEntry(1L, 0)))
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("Dashboard 99 not found")
+            .hasMessage("Category 99 not found")
     }
 
     @Test
-    fun `updateOrdering throws when graph not found in dashboard`() {
-        whenever(dashboardRepository.existsById(1L)).thenReturn(true)
-        whenever(graphRepository.findAllByDashboardIdAndIdIn(1L, listOf(99L))).thenReturn(emptyList())
+    fun `updateOrdering throws when graph not found in category`() {
+        whenever(graphCategoryRepository.existsById(1L)).thenReturn(true)
+        whenever(graphRepository.findAllByCategoryIdAndIdIn(1L, listOf(99L))).thenReturn(emptyList())
 
         assertThatThrownBy {
             graphService.updateOrdering(1L, listOf(GraphOrderingEntry(99L, 0)))
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("Graphs not found in dashboard 1: [99]")
+            .hasMessage("Graphs not found in category 1: [99]")
     }
 
     @Test
     fun `updateOrdering updates ordering and returns sorted result`() {
         val project = project(id = 1L)
         val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
         val graph1 = GraphEntity(
             id = 10L,
-            dashboard = dashboard,
+            category = category,
             name = "first",
             graphType = null,
             ordering = 0,
@@ -309,15 +319,15 @@ class GraphServiceTest {
         )
         val graph2 = GraphEntity(
             id = 11L,
-            dashboard = dashboard,
+            category = category,
             name = "second",
             graphType = null,
             ordering = 1,
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
 
-        whenever(dashboardRepository.existsById(1L)).thenReturn(true)
-        whenever(graphRepository.findAllByDashboardIdAndIdIn(1L, listOf(10L, 11L)))
+        whenever(graphCategoryRepository.existsById(1L)).thenReturn(true)
+        whenever(graphRepository.findAllByCategoryIdAndIdIn(1L, listOf(10L, 11L)))
             .thenReturn(listOf(graph1, graph2))
         whenever(graphRepository.saveAll(any<Collection<GraphEntity>>()))
             .thenReturn(listOf(graph1, graph2))
@@ -347,6 +357,14 @@ class GraphServiceTest {
         project = project,
         name = "dashboard",
         description = null,
+        updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+    )
+
+    private fun category(dashboard: DashboardEntity, id: Long) = GraphCategoryEntity(
+        id = id,
+        dashboard = dashboard,
+        name = "category",
+        ordering = 0,
         updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
     )
 }
