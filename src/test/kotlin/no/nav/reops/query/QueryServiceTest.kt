@@ -56,6 +56,7 @@ class QueryServiceTest {
 
         whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
 
         val result = queryService.createQuery(1L, CreateQueryRequest("query", "select 1"))
@@ -65,6 +66,7 @@ class QueryServiceTest {
         assertThat(captor.firstValue.name).isEqualTo("query")
         assertThat(captor.firstValue.sqlText).isEqualTo("select 1")
         assertThat(captor.firstValue.graph).isEqualTo(graph)
+        assertThat(captor.firstValue.ordering).isEqualTo(0)
 
         verify(changeService).createChange(10L, EntityType.QUERY, ChangeType.CREATED)
 
@@ -130,7 +132,7 @@ class QueryServiceTest {
             sqlText = "select 2",
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
-        whenever(queryRepository.findAllByGraphId(1L)).thenReturn(listOf(first, second))
+        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
 
         val result = queryService.getAllQuery(1L)
 
@@ -273,6 +275,7 @@ class QueryServiceTest {
 
         whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
 
         val result = queryService.createQuery(
@@ -304,6 +307,98 @@ class QueryServiceTest {
 
         assertThat(result).isNotNull
         assertThat(result!!.sqlText).isEqualTo("with cte as (select 1 as a) select a from cte")
+    }
+
+    @Test
+    fun `createQuery assigns next ordering value`() {
+        val graph = graph(id = 1L)
+        val existingEntity = QueryEntity(
+            id = 5L,
+            graph = graph,
+            name = "existing",
+            sqlText = "select 1",
+            ordering = 3,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        val savedEntity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "new",
+            sqlText = "select 2",
+            ordering = 4,
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
+        whenever(queryRepository.existsByGraphIdAndName(1L, "new")).thenReturn(false)
+        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingEntity))
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+
+        queryService.createQuery(1L, CreateQueryRequest("new", "select 2"))
+
+        val captor = argumentCaptor<QueryEntity>()
+        verify(queryRepository).save(captor.capture())
+        assertThat(captor.firstValue.ordering).isEqualTo(4)
+    }
+
+    @Test
+    fun `updateOrdering throws when graph not found`() {
+        whenever(graphRepository.existsById(99L)).thenReturn(false)
+
+        assertThatThrownBy {
+            queryService.updateOrdering(99L, listOf(QueryOrderingEntry(1L, 0)))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Graph 99 not found")
+    }
+
+    @Test
+    fun `updateOrdering throws when query not found in graph`() {
+        whenever(graphRepository.existsById(1L)).thenReturn(true)
+        whenever(queryRepository.findAllByGraphIdAndIdIn(1L, listOf(99L))).thenReturn(emptyList())
+
+        assertThatThrownBy {
+            queryService.updateOrdering(1L, listOf(QueryOrderingEntry(99L, 0)))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Queries not found in graph 1: [99]")
+    }
+
+    @Test
+    fun `updateOrdering updates ordering and returns sorted result`() {
+        val graph = graph(id = 1L)
+        val query1 = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "first",
+            sqlText = "select 1",
+            ordering = 0,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        val query2 = QueryEntity(
+            id = 11L,
+            graph = graph,
+            name = "second",
+            sqlText = "select 2",
+            ordering = 1,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+
+        whenever(graphRepository.existsById(1L)).thenReturn(true)
+        whenever(queryRepository.findAllByGraphIdAndIdIn(1L, listOf(10L, 11L)))
+            .thenReturn(listOf(query1, query2))
+        whenever(queryRepository.saveAll(any<Collection<QueryEntity>>()))
+            .thenReturn(listOf(query1, query2))
+
+        val entries = listOf(
+            QueryOrderingEntry(10L, 2),
+            QueryOrderingEntry(11L, 1),
+        )
+        val result = queryService.updateOrdering(1L, entries)
+
+        assertThat(query1.ordering).isEqualTo(2)
+        assertThat(query2.ordering).isEqualTo(1)
+        assertThat(result).hasSize(2)
+        assertThat(result[0].id).isEqualTo(11L)
+        assertThat(result[1].id).isEqualTo(10L)
     }
 
     private fun graph(id: Long) = GraphEntity(

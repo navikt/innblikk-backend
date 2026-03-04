@@ -7,6 +7,7 @@ data class QueryDto(
     val graphId: Long,
     val name: String,
     val sqlText: String,
+    val ordering: Int,
     val updatedAt: LocalDateTime,
 )
 
@@ -19,3 +20,9 @@ data class UpdateQueryRequest(
     val name: String,
     val sqlText: String,
 )
+
+data class QueryOrderingEntry(
+    val id: Long,
+    val ordering: Int,
+)
+

@@ -31,5 +31,7 @@ class QueryEntity(
 
     @Column(name = "sql_text", nullable = false) var sqlText: String,
 
+    @Column(name = "ordering", nullable = false) var ordering: Int = 0,
+
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

@@ -69,4 +69,16 @@ class QueryController(private val queryService: QueryService) {
         val deleted = queryService.deleteQuery(graphId, id)
         return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
+
+    @PostMapping("/ordering")
+    fun updateOrdering(
+        @PathVariable projectId: Long,
+        @PathVariable dashboardId: Long,
+        @PathVariable categoryId: Long,
+        @PathVariable graphId: Long,
+        @RequestBody entries: List<QueryOrderingEntry>,
+    ): ResponseEntity<List<QueryDto>> {
+        val result = queryService.updateOrdering(graphId, entries)
+        return ResponseEntity.ok(result)
+    }
 }

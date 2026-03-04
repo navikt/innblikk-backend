@@ -24,8 +24,11 @@ class QueryService(
             throw IllegalArgumentException("Graph with name '${request.name}' already exists in graph $graphId")
         }
 
+        val maxOrdering = queryRepository.findAllByGraphIdOrderByOrderingAsc(graphId)
+            .maxOfOrNull { it.ordering } ?: -1
+
         val entity = QueryEntity(
-            graph = graph, name = request.name, sqlText = request.sqlText
+            graph = graph, name = request.name, sqlText = request.sqlText, ordering = maxOrdering + 1
         )
 
         return queryRepository.save(entity).toDto().also {
@@ -33,7 +36,8 @@ class QueryService(
         }
     }
 
-    fun getAllQuery(graphId: Long): List<QueryDto> = queryRepository.findAllByGraphId(graphId).map { it.toDto() }
+    fun getAllQuery(graphId: Long): List<QueryDto> =
+        queryRepository.findAllByGraphIdOrderByOrderingAsc(graphId).map { it.toDto() }
 
     fun getQueryById(graphId: Long, id: Long): QueryDto? = queryRepository.findByIdAndGraphId(id, graphId)?.toDto()
 
@@ -52,6 +56,26 @@ class QueryService(
         return queryRepository.save(entity).toDto().also {
             changeService.createChange(it.id, EntityType.QUERY, ChangeType.UPDATED)
         }
+    }
+
+    fun updateOrdering(graphId: Long, entries: List<QueryOrderingEntry>): List<QueryDto> {
+        if (!graphRepository.existsById(graphId)) {
+            throw IllegalArgumentException("Graph $graphId not found")
+        }
+
+        val ids = entries.map { it.id }
+        val entities = queryRepository.findAllByGraphIdAndIdIn(graphId, ids).associateBy { it.id }
+
+        val missingIds = ids.filter { it !in entities }
+        if (missingIds.isNotEmpty()) {
+            throw IllegalArgumentException("Queries not found in graph $graphId: $missingIds")
+        }
+
+        entries.forEach { entry ->
+            entities[entry.id]!!.ordering = entry.ordering
+        }
+
+        return queryRepository.saveAll(entities.values).map { it.toDto() }.sortedBy { it.ordering }
     }
 
     fun deleteQuery(graphId: Long, id: Long): Boolean {
@@ -84,6 +108,7 @@ class QueryService(
         graphId = requireNotNull(graph.id),
         name = name,
         sqlText = sqlText,
+        ordering = ordering,
         updatedAt = updatedAt,
     )
 }
