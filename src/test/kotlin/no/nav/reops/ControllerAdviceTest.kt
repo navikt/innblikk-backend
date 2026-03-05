@@ -87,4 +87,17 @@ class ControllerAdviceTest(
         // don't leak the original exception message
         assertThat(body).doesNotContain("super-secret-details")
     }
+
+    @Test
+    fun `Unsupported HTTP method becomes 405`() {
+        val result = mockMvc.post("/test/illegal") {
+            accept = MediaType.APPLICATION_JSON
+        }.andReturn()
+
+        assertThat(result.response.status).isEqualTo(405)
+        val body = result.response.contentAsString
+        assertThat(body).contains("\"error\":\"METHOD_NOT_ALLOWED\"")
+        assertThat(body).contains("\"message\":\"Method not allowed\"")
+        assertThat(body).contains("\"errorId\":")
+    }
 }

@@ -48,5 +48,5 @@ class GraphEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    var queries: MutableSet<QueryEntity> = mutableSetOf()
+    var queries: MutableList<QueryEntity> = mutableListOf()
 }

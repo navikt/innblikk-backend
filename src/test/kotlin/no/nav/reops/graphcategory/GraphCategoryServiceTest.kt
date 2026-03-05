@@ -54,7 +54,7 @@ class GraphCategoryServiceTest {
 
         whenever(dashboardRepository.findById(1L)).thenReturn(Optional.of(dashboard))
         whenever(graphCategoryRepository.existsByDashboardIdAndName(1L, "tab1")).thenReturn(false)
-        whenever(graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+        whenever(graphCategoryRepository.findMaxOrderingByDashboardId(1L)).thenReturn(-1)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(savedEntity)
 
         val result = graphCategoryService.createCategory(1L, CreateGraphCategoryRequest("tab1"))
@@ -258,7 +258,7 @@ class GraphCategoryServiceTest {
 
         whenever(dashboardRepository.findById(1L)).thenReturn(Optional.of(dashboard))
         whenever(graphCategoryRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(false)
-        whenever(graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingCategory))
+        whenever(graphCategoryRepository.findMaxOrderingByDashboardId(1L)).thenReturn(3)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(savedEntity)
 
         graphCategoryService.createCategory(1L, CreateGraphCategoryRequest("new"))
@@ -287,6 +287,37 @@ class GraphCategoryServiceTest {
             graphCategoryService.updateOrdering(1L, listOf(GraphCategoryOrderingEntry(99L, 0)))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Categories not found in dashboard 1: [99]")
+    }
+
+
+    @Test
+    fun `updateCategory skips name uniqueness check when name unchanged`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val entity = GraphCategoryEntity(
+            id = 10L,
+            dashboard = dashboard,
+            name = "same",
+            ordering = 0,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(graphCategoryRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
+        whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(entity)
+
+        val result = graphCategoryService.updateCategory(1L, 10L, UpdateGraphCategoryRequest("same"))
+
+        assertThat(result).isNotNull
+        assertThat(result!!.name).isEqualTo("same")
+        verify(changeService).createChange(10L, EntityType.GRAPH_CATEGORY, ChangeType.UPDATED)
+    }
+
+    @Test
+    fun `getAllCategories returns empty list when no categories exist`() {
+        whenever(graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+
+        val result = graphCategoryService.getAllCategories(1L)
+
+        assertThat(result).isEmpty()
     }
 
     @Test

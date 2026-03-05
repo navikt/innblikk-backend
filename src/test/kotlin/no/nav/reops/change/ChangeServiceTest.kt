@@ -79,6 +79,20 @@ class ChangeServiceTest {
     }
 
     @Test
+    fun `getChangeByEntityIdAndEntityType returns null when not found`() {
+        whenever(
+            changeRepository.findFirstByEntityTypeAndEntityIdOrderByUpdatedAtDesc(
+                EntityType.QUERY,
+                999L,
+            )
+        ).thenReturn(null)
+
+        val result = changeService.getChangeByEntityIdAndEntityType(999L, EntityType.QUERY)
+
+        assertThat(result).isNull()
+    }
+
+    @Test
     fun `getAllChangeByEntityIdAndEntityType maps list to dto`() {
         val first = ChangeEntity(
             id = 3L,
@@ -106,5 +120,19 @@ class ChangeServiceTest {
         assertThat(result).hasSize(2)
         assertThat(result[0].changeType).isEqualTo(ChangeType.DELETED)
         assertThat(result[1].changeType).isEqualTo(ChangeType.CREATED)
+    }
+
+    @Test
+    fun `getAllChangeByEntityIdAndEntityType returns empty list when none exist`() {
+        whenever(
+            changeRepository.findByEntityTypeAndEntityIdOrderByUpdatedAtDesc(
+                EntityType.GRAPH,
+                999L,
+            )
+        ).thenReturn(emptyList())
+
+        val result = changeService.getAllChangeByEntityIdAndEntityType(999L, EntityType.GRAPH)
+
+        assertThat(result).isEmpty()
     }
 }

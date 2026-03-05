@@ -56,7 +56,7 @@ class GraphServiceTest {
 
         whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
         whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
-        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+        whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
         val result = graphService.createGraph(1L, CreateGraphRequest("graph", GraphType.LINE))
@@ -273,7 +273,7 @@ class GraphServiceTest {
 
         whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
         whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
-        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingGraph))
+        whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(3)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
         graphService.createGraph(1L, CreateGraphRequest("new", null))
@@ -302,6 +302,135 @@ class GraphServiceTest {
             graphService.updateOrdering(1L, listOf(GraphOrderingEntry(99L, 0)))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Graphs not found in category 1: [99]")
+    }
+
+
+    @Test
+    fun `updateGraph skips name uniqueness check when name unchanged`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
+        val entity = GraphEntity(
+            id = 10L,
+            category = category,
+            name = "same",
+            graphType = GraphType.BAR,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+
+        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("same", GraphType.PIE))
+
+        assertThat(result).isNotNull
+        assertThat(result!!.graphType).isEqualTo(GraphType.PIE)
+        verify(changeService).createChange(10L, EntityType.GRAPH, ChangeType.UPDATED)
+    }
+
+    @Test
+    fun `createGraph with explicit width`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
+        val savedEntity = GraphEntity(
+            id = 10L,
+            category = category,
+            name = "graph",
+            graphType = null,
+            width = 75,
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
+        whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
+        whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+
+        graphService.createGraph(1L, CreateGraphRequest("graph", null, 75))
+
+        val captor = argumentCaptor<GraphEntity>()
+        verify(graphRepository).save(captor.capture())
+        assertThat(captor.firstValue.width).isEqualTo(75)
+    }
+
+    @Test
+    fun `createGraph uses default width when not specified`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
+        val savedEntity = GraphEntity(
+            id = 10L,
+            category = category,
+            name = "graph",
+            graphType = null,
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphCategoryRepository.findById(1L)).thenReturn(Optional.of(category))
+        whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
+        whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
+        whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+
+        graphService.createGraph(1L, CreateGraphRequest("graph", null, null))
+
+        val captor = argumentCaptor<GraphEntity>()
+        verify(graphRepository).save(captor.capture())
+        assertThat(captor.firstValue.width).isEqualTo(50)
+    }
+
+    @Test
+    fun `updateGraph preserves width when request width is null`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
+        val entity = GraphEntity(
+            id = 10L,
+            category = category,
+            name = "graph",
+            graphType = null,
+            width = 75,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+
+        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", null, null))
+
+        val captor = argumentCaptor<GraphEntity>()
+        verify(graphRepository).save(captor.capture())
+        assertThat(captor.firstValue.width).isEqualTo(75)
+    }
+
+    @Test
+    fun `updateGraph updates width when provided`() {
+        val project = project(id = 1L)
+        val dashboard = dashboard(project = project, id = 1L)
+        val category = category(dashboard = dashboard, id = 1L)
+        val entity = GraphEntity(
+            id = 10L,
+            category = category,
+            name = "graph",
+            graphType = null,
+            width = 50,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
+        whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+
+        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", null, 100))
+
+        val captor = argumentCaptor<GraphEntity>()
+        verify(graphRepository).save(captor.capture())
+        assertThat(captor.firstValue.width).isEqualTo(100)
+    }
+
+    @Test
+    fun `getAllGraphs returns empty list when no graphs exist`() {
+        whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+
+        val result = graphService.getAllGraphs(1L)
+
+        assertThat(result).isEmpty()
     }
 
     @Test

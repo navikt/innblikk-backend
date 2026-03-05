@@ -5,6 +5,7 @@ import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import no.nav.reops.graph.GraphRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class QueryService(
@@ -13,6 +14,7 @@ class QueryService(
     private val changeService: ChangeService
 ) {
 
+    @Transactional
     fun createQuery(graphId: Long, request: CreateQueryRequest): QueryDto {
         validateSelectOnly(request.sqlText)
 
@@ -24,8 +26,7 @@ class QueryService(
             throw IllegalArgumentException("Graph with name '${request.name}' already exists in graph $graphId")
         }
 
-        val maxOrdering = queryRepository.findAllByGraphIdOrderByOrderingAsc(graphId)
-            .maxOfOrNull { it.ordering } ?: -1
+        val maxOrdering = queryRepository.findMaxOrderingByGraphId(graphId)
 
         val entity = QueryEntity(
             graph = graph, name = request.name, sqlText = request.sqlText, ordering = maxOrdering + 1
@@ -36,11 +37,14 @@ class QueryService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getAllQuery(graphId: Long): List<QueryDto> =
         queryRepository.findAllByGraphIdOrderByOrderingAsc(graphId).map { it.toDto() }
 
+    @Transactional(readOnly = true)
     fun getQueryById(graphId: Long, id: Long): QueryDto? = queryRepository.findByIdAndGraphId(id, graphId)?.toDto()
 
+    @Transactional
     fun updateQuery(graphId: Long, id: Long, request: UpdateQueryRequest): QueryDto? {
         validateSelectOnly(request.sqlText)
 
@@ -58,6 +62,7 @@ class QueryService(
         }
     }
 
+    @Transactional
     fun updateOrdering(graphId: Long, entries: List<QueryOrderingEntry>): List<QueryDto> {
         if (!graphRepository.existsById(graphId)) {
             throw IllegalArgumentException("Graph $graphId not found")
@@ -78,6 +83,7 @@ class QueryService(
         return queryRepository.saveAll(entities.values).map { it.toDto() }.sortedBy { it.ordering }
     }
 
+    @Transactional
     fun deleteQuery(graphId: Long, id: Long): Boolean {
         val entity = queryRepository.findByIdAndGraphId(id, graphId) ?: return false
         queryRepository.delete(entity).also {

@@ -42,5 +42,5 @@ class DashboardEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    var categories: MutableSet<GraphCategoryEntity> = mutableSetOf()
+    var categories: MutableList<GraphCategoryEntity> = mutableListOf()
 }
