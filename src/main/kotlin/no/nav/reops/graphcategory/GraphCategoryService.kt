@@ -5,6 +5,7 @@ import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import no.nav.reops.dashboard.DashboardRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GraphCategoryService(
@@ -13,6 +14,7 @@ class GraphCategoryService(
     private val changeService: ChangeService,
 ) {
 
+    @Transactional
     fun createCategory(dashboardId: Long, request: CreateGraphCategoryRequest): GraphCategoryDto {
         val dashboard = dashboardRepository.findById(dashboardId).orElseThrow {
             IllegalArgumentException("Dashboard $dashboardId not found")
@@ -22,8 +24,7 @@ class GraphCategoryService(
             throw IllegalArgumentException("Category with name '${request.name}' already exists in dashboard $dashboardId")
         }
 
-        val maxOrdering = graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(dashboardId)
-            .maxOfOrNull { it.ordering } ?: -1
+        val maxOrdering = graphCategoryRepository.findMaxOrderingByDashboardId(dashboardId)
 
         val entity = GraphCategoryEntity(
             dashboard = dashboard,
@@ -36,12 +37,15 @@ class GraphCategoryService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getAllCategories(dashboardId: Long): List<GraphCategoryDto> =
         graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(dashboardId).map { it.toDto() }
 
+    @Transactional(readOnly = true)
     fun getCategoryById(dashboardId: Long, id: Long): GraphCategoryDto? =
         graphCategoryRepository.findByIdAndDashboardId(id, dashboardId)?.toDto()
 
+    @Transactional
     fun updateCategory(dashboardId: Long, id: Long, request: UpdateGraphCategoryRequest): GraphCategoryDto? {
         val entity = graphCategoryRepository.findByIdAndDashboardId(id, dashboardId) ?: return null
 
@@ -56,6 +60,7 @@ class GraphCategoryService(
         }
     }
 
+    @Transactional
     fun updateOrdering(dashboardId: Long, entries: List<GraphCategoryOrderingEntry>): List<GraphCategoryDto> {
         if (!dashboardRepository.existsById(dashboardId)) {
             throw IllegalArgumentException("Dashboard $dashboardId not found")
@@ -76,6 +81,7 @@ class GraphCategoryService(
         return graphCategoryRepository.saveAll(entities.values).map { it.toDto() }.sortedBy { it.ordering }
     }
 
+    @Transactional
     fun deleteCategory(dashboardId: Long, id: Long): Boolean {
         val entity = graphCategoryRepository.findByIdAndDashboardId(id, dashboardId) ?: return false
         graphCategoryRepository.delete(entity).also {

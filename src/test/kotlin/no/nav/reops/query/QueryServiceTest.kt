@@ -56,7 +56,7 @@ class QueryServiceTest {
 
         whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
-        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
 
         val result = queryService.createQuery(1L, CreateQueryRequest("query", "select 1"))
@@ -113,6 +113,147 @@ class QueryServiceTest {
             queryService.createQuery(1L, CreateQueryRequest("query", "select 1; drop table x"))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Only single-statement SELECT queries are allowed")
+    }
+
+    @Test
+    fun `createQuery throws when sql is blank`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", ""))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Query sqlText must not be blank")
+    }
+
+    @Test
+    fun `createQuery throws when sql is whitespace only`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "   "))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Query sqlText must not be blank")
+    }
+
+    @Test
+    fun `createQuery throws when sql is insert`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "insert into users values (1)"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only SELECT queries are allowed")
+    }
+
+    @Test
+    fun `createQuery throws when sql is delete`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "delete from users"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only SELECT queries are allowed")
+    }
+
+    @Test
+    fun `createQuery throws when sql is drop table`() {
+        assertThatThrownBy {
+            queryService.createQuery(1L, CreateQueryRequest("query", "drop table users"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only SELECT queries are allowed")
+    }
+
+    @Test
+    fun `createQuery allows uppercase SELECT`() {
+        val graph = graph(id = 1L)
+        val savedEntity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "query",
+            sqlText = "SELECT 1",
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
+        whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+
+        val result = queryService.createQuery(1L, CreateQueryRequest("query", "SELECT 1"))
+
+        assertThat(result.sqlText).isEqualTo("SELECT 1")
+    }
+
+    @Test
+    fun `createQuery allows uppercase WITH cte`() {
+        val graph = graph(id = 1L)
+        val savedEntity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "query",
+            sqlText = "WITH cte AS (SELECT 1) SELECT * FROM cte",
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
+        whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+
+        val result = queryService.createQuery(
+            1L,
+            CreateQueryRequest("query", "WITH cte AS (SELECT 1) SELECT * FROM cte"),
+        )
+
+        assertThat(result.sqlText).isEqualTo("WITH cte AS (SELECT 1) SELECT * FROM cte")
+    }
+
+    @Test
+    fun `createQuery allows leading whitespace before select`() {
+        val graph = graph(id = 1L)
+        val savedEntity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "query",
+            sqlText = "  select 1",
+            updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
+        )
+
+        whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
+        whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+
+        val result = queryService.createQuery(1L, CreateQueryRequest("query", "  select 1"))
+
+        assertThat(result).isNotNull
+    }
+
+    @Test
+    fun `updateQuery throws when sql is blank`() {
+        assertThatThrownBy {
+            queryService.updateQuery(1L, 10L, UpdateQueryRequest("name", ""))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Query sqlText must not be blank")
+    }
+
+    @Test
+    fun `updateQuery throws when sql contains semicolons`() {
+        assertThatThrownBy {
+            queryService.updateQuery(1L, 10L, UpdateQueryRequest("name", "select 1; drop table x"))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Only single-statement SELECT queries are allowed")
+    }
+
+    @Test
+    fun `updateQuery skips name uniqueness check when name unchanged`() {
+        val graph = graph(id = 1L)
+        val entity = QueryEntity(
+            id = 10L,
+            graph = graph,
+            name = "same",
+            sqlText = "select 1",
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(queryRepository.findByIdAndGraphId(10L, 1L)).thenReturn(entity)
+        whenever(queryRepository.save(any<QueryEntity>())).thenReturn(entity)
+
+        val result = queryService.updateQuery(1L, 10L, UpdateQueryRequest("same", "select 2"))
+
+        assertThat(result).isNotNull
+        assertThat(result!!.sqlText).isEqualTo("select 2")
     }
 
     @Test
@@ -275,7 +416,7 @@ class QueryServiceTest {
 
         whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
-        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
 
         val result = queryService.createQuery(
@@ -331,7 +472,7 @@ class QueryServiceTest {
 
         whenever(graphRepository.findById(1L)).thenReturn(Optional.of(graph))
         whenever(queryRepository.existsByGraphIdAndName(1L, "new")).thenReturn(false)
-        whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(listOf(existingEntity))
+        whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(3)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
 
         queryService.createQuery(1L, CreateQueryRequest("new", "select 2"))

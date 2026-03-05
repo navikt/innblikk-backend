@@ -1,5 +1,6 @@
 package no.nav.reops.query
 
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 
 interface QueryRepository : CrudRepository<QueryEntity, Long> {
@@ -9,4 +10,7 @@ interface QueryRepository : CrudRepository<QueryEntity, Long> {
     fun existsByGraphIdAndName(dashboardId: Long, name: String): Boolean
     fun existsByIdAndName(id: Long, name: String): Boolean
     fun findAllByGraphIdAndIdIn(graphId: Long, ids: List<Long>): List<QueryEntity>
+
+    @Query("SELECT COALESCE(MAX(q.ordering), -1) FROM QueryEntity q WHERE q.graph.id = :graphId")
+    fun findMaxOrderingByGraphId(graphId: Long): Int
 }

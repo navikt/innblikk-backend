@@ -164,5 +164,33 @@ class ProjectServiceTest {
         verify(changeService).createChange(10L, EntityType.PROJECT, ChangeType.DELETED)
         assertThat(result).isTrue()
     }
+
+    @Test
+    fun `createProject with null description`() {
+        val savedEntity = ProjectEntity(
+            id = 1L,
+            name = "project",
+            description = null,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+
+        whenever(projectRepository.save(any<ProjectEntity>())).thenReturn(savedEntity)
+
+        val result = projectService.createProject(CreateProjectRequest("project", null))
+
+        val captor = argumentCaptor<ProjectEntity>()
+        verify(projectRepository).save(captor.capture())
+        assertThat(captor.firstValue.description).isNull()
+        assertThat(result.description).isNull()
+    }
+
+    @Test
+    fun `getAllProjects returns empty list when no projects exist`() {
+        whenever(projectRepository.findAll()).thenReturn(emptyList())
+
+        val result = projectService.getAllProjects()
+
+        assertThat(result).isEmpty()
+    }
 }
 

@@ -230,5 +230,57 @@ class DashboardServiceTest {
         verify(changeService).createChange(10L, EntityType.DASHBOARD, ChangeType.DELETED)
         assertThat(result).isTrue()
     }
+
+    @Test
+    fun `updateDashboard skips name uniqueness check when name unchanged`() {
+        val project = ProjectEntity(id = 1L, name = "project")
+        val entity = DashboardEntity(
+            id = 10L,
+            project = project,
+            name = "same",
+            description = "old desc",
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
+        whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(entity)
+
+        val result = dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("same", "new desc"))
+
+        assertThat(result).isNotNull
+        assertThat(result!!.description).isEqualTo("new desc")
+        verify(changeService).createChange(10L, EntityType.DASHBOARD, ChangeType.UPDATED)
+    }
+
+    @Test
+    fun `getAllDashboards returns empty list when no dashboards exist`() {
+        whenever(dashboardRepository.findAllByProjectId(1L)).thenReturn(emptyList())
+
+        val result = dashboardService.getAllDashboards(1L)
+
+        assertThat(result).isEmpty()
+    }
+
+    @Test
+    fun `createDashboard with null description`() {
+        val project = ProjectEntity(id = 1L, name = "project")
+        val savedEntity = DashboardEntity(
+            id = 10L,
+            project = project,
+            name = "dashboard",
+            description = null,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+
+        whenever(projectRepository.findById(1L)).thenReturn(Optional.of(project))
+        whenever(dashboardRepository.existsByProjectIdAndName(1L, "dashboard")).thenReturn(false)
+        whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(savedEntity)
+
+        val result = dashboardService.createDashboard(1L, CreateDashboardRequest("dashboard", null))
+
+        val captor = argumentCaptor<DashboardEntity>()
+        verify(dashboardRepository).save(captor.capture())
+        assertThat(captor.firstValue.description).isNull()
+        assertThat(result.description).isNull()
+    }
 }
 

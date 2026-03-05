@@ -42,6 +42,6 @@ class GraphCategoryEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
     )
-    var graphs: MutableSet<GraphEntity> = mutableSetOf()
+    var graphs: MutableList<GraphEntity> = mutableListOf()
 }
 

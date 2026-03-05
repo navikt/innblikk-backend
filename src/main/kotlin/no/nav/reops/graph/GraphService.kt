@@ -5,6 +5,7 @@ import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import no.nav.reops.graphcategory.GraphCategoryRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GraphService(
@@ -13,6 +14,7 @@ class GraphService(
     private val changeService: ChangeService
 ) {
 
+    @Transactional
     fun createGraph(categoryId: Long, request: CreateGraphRequest): GraphDto {
         val category = graphCategoryRepository.findById(categoryId).orElseThrow {
             IllegalArgumentException("Category $categoryId not found")
@@ -22,8 +24,7 @@ class GraphService(
             throw IllegalArgumentException("Graph with name '${request.name}' already exists in category $categoryId")
         }
 
-        val maxOrdering = graphRepository.findAllByCategoryIdOrderByOrderingAsc(categoryId)
-            .maxOfOrNull { it.ordering } ?: -1
+        val maxOrdering = graphRepository.findMaxOrderingByCategoryId(categoryId)
 
         val entity = GraphEntity(
             category = category,
@@ -38,12 +39,15 @@ class GraphService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getAllGraphs(categoryId: Long): List<GraphDto> =
         graphRepository.findAllByCategoryIdOrderByOrderingAsc(categoryId).map { it.toDto() }
 
+    @Transactional(readOnly = true)
     fun getGraphById(categoryId: Long, id: Long): GraphDto? =
         graphRepository.findByIdAndCategoryId(id, categoryId)?.toDto()
 
+    @Transactional
     fun updateGraph(categoryId: Long, id: Long, request: UpdateGraphRequest): GraphDto? {
         val entity = graphRepository.findByIdAndCategoryId(id, categoryId) ?: return null
 
@@ -60,6 +64,7 @@ class GraphService(
         }
     }
 
+    @Transactional
     fun updateOrdering(categoryId: Long, entries: List<GraphOrderingEntry>): List<GraphDto> {
         if (!graphCategoryRepository.existsById(categoryId)) {
             throw IllegalArgumentException("Category $categoryId not found")
@@ -80,6 +85,7 @@ class GraphService(
         return graphRepository.saveAll(entities.values).map { it.toDto() }.sortedBy { it.ordering }
     }
 
+    @Transactional
     fun deleteGraph(categoryId: Long, id: Long): Boolean {
         val entity = graphRepository.findByIdAndCategoryId(id, categoryId) ?: return false
         graphRepository.delete(entity).also {

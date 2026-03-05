@@ -5,6 +5,7 @@ import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import no.nav.reops.project.ProjectRepository
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class DashboardService(
@@ -12,6 +13,7 @@ class DashboardService(
     private val projectRepository: ProjectRepository,
     private val changeService: ChangeService
 ) {
+    @Transactional
     fun createDashboard(projectId: Long, request: CreateDashboardRequest): DashboardDto {
         val project = projectRepository.findById(projectId).orElseThrow {
             IllegalArgumentException("Project $projectId not found")
@@ -32,12 +34,15 @@ class DashboardService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun getAllDashboards(projectId: Long): List<DashboardDto> =
         dashboardRepository.findAllByProjectId(projectId).map { it.toDto() }
 
+    @Transactional(readOnly = true)
     fun getDashboardById(projectId: Long, id: Long): DashboardDto? =
         dashboardRepository.findByIdAndProjectId(id, projectId)?.toDto()
 
+    @Transactional
     fun updateDashboard(projectId: Long, id: Long, request: UpdateDashboardRequest): DashboardDto? {
         val entity = dashboardRepository.findByIdAndProjectId(id, projectId) ?: return null
 
@@ -53,6 +58,7 @@ class DashboardService(
         }
     }
 
+    @Transactional
     fun deleteDashboard(projectId: Long, id: Long): Boolean {
         val entity = dashboardRepository.findByIdAndProjectId(id, projectId) ?: return false
         dashboardRepository.delete(entity).also {
