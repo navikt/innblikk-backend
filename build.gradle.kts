@@ -1,6 +1,7 @@
 plugins {
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("org.graalvm.buildtools.native") version "0.11.5"
 	kotlin("jvm") version "2.3.10"
 	kotlin("plugin.spring") version "2.3.10"
 	kotlin("plugin.jpa") version "2.3.10"
@@ -11,7 +12,9 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(
+			providers.gradleProperty("javaVersion").getOrElse("25")
+		)
 	}
 }
 
@@ -26,12 +29,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
-	implementation("org.springframework.security:spring-security-oauth2-jose")
 	implementation("io.micrometer:micrometer-registry-prometheus")
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
-	implementation("io.micrometer:micrometer-registry-prometheus")
 	implementation("org.postgresql:postgresql")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
@@ -69,6 +70,32 @@ tasks.withType<Test> {
 
 tasks.named<Jar>("bootJar") {
 	archiveFileName.set("app.jar")
+}
+
+graalvmNative {
+	binaries {
+		named("main") {
+			imageName.set("app")
+			mainClass.set("no.nav.reops.InnblikkBackendApplicationKt")
+		}
+	}
+	binaries.all {
+		buildArgs.addAll(
+			"-H:+ReportExceptionStackTraces",
+
+			// Strip debug symbols from the binary
+			"-H:-IncludeMethodData",
+
+			// Optimize for size over peak throughput
+			"-Os",
+		)
+
+		if (System.getenv("CI").toBoolean()) {
+			buildArgs.add("-J-Xmx32g")
+		} else {
+			buildArgs.add("-J-Xmx6g")
+		}
+	}
 }
 
 tasks.register<Exec>("generateChangelog") {

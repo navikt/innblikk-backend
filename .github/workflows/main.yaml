@@ -10,14 +10,16 @@ on:
       - 'README.md'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  build:
-    name: "build"
+  test:
+    name: "test"
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v6
       - name: JDK
@@ -25,21 +27,25 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
+          cache: gradle
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v5
         with:
-          cache-disabled: true
           dependency-graph: generate-and-submit
-      - name: Build
+      - name: Build and test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew clean build
-      - name: Login to GitHub Packages Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew build --build-cache
+
+  docker:
+    name: "docker"
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
       - name: Build and push
         id: docker-build-push
         uses: nais/docker-build-push@v0
@@ -47,17 +53,12 @@ jobs:
           team: team-researchops
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-      - name: Show image and SHA for later prod deploy
-        run: |
-          echo "========================================"
-          echo "image=${{ steps.docker-build-push.outputs.image }}"
-          echo "version=${{ github.sha }}"
-          echo "========================================"
+          build_args: CI=true
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
   deploy-application-dev:
-    needs: [build]
+    needs: [test, docker]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,10 +70,10 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }}
+          VAR: image=${{ needs.docker.outputs.image }}
 
   deploy-application-prod:
-    needs: [build, deploy-application-dev]
+    needs: [docker, deploy-application-dev]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -84,4 +85,4 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/nais-prod.yaml
-          VAR: image=${{ needs.build.outputs.image }}
+          VAR: image=${{ needs.docker.outputs.image }}
