@@ -96,6 +96,12 @@ graalvmNative {
 			buildArgs.add("-J-Xmx6g")
 		}
 	}
+	// Zonky embedded-database-spring-test is incompatible with Spring AOT code generation
+	testSupport.set(false)
+}
+
+tasks.named("processTestAot") {
+	enabled = false
 }
 
 tasks.register<Exec>("generateChangelog") {
