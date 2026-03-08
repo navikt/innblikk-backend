@@ -91,7 +91,7 @@ graalvmNative {
 		)
 
 		if (System.getenv("CI").toBoolean()) {
-			buildArgs.add("-J-Xmx32g")
+			buildArgs.add("-J-Xmx6g") // change to 32 after adding ubuntu-8-core
 		} else {
 			buildArgs.add("-J-Xmx6g")
 		}
