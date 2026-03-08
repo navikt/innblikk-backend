@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${NAIS_DATABASE_START_UMAMI_BACKEND_START_UMAMI_JDBC_URL} #start-umami-backend
+    url: ${NAIS_DATABASE_START_UMAMI_BACKEND_START_UMAMI_JDBC_URL}
   security:
     oauth2:
       resourceserver:
