@@ -98,7 +98,7 @@ class ControlAdvice {
     @ExceptionHandler(Exception::class)
     fun handleGeneralException(ex: Exception, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
         val errorId = newErrorId()
-        LOG.error("Unexpected error ({}) {} {}", errorId, request.method, request.requestURI, ex)
+        LOG.error("Unexpected error ({}) {} {} - [{}]: {}", errorId, request.method, request.requestURI, ex.javaClass.name, ex.message, ex)
 
         val body = ErrorResponse(
             error = "INTERNAL_ERROR",
