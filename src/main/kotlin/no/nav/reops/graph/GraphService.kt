@@ -29,6 +29,7 @@ class GraphService(
         val entity = GraphEntity(
             category = category,
             name = request.name,
+            description = request.description,
             graphType = request.graphType,
             width = request.width ?: 50,
             ordering = maxOrdering + 1,
@@ -56,6 +57,7 @@ class GraphService(
         }
 
         entity.name = request.name
+        entity.description = request.description
         entity.graphType = request.graphType
         entity.width = request.width ?: entity.width
 
@@ -98,6 +100,7 @@ class GraphService(
         id = requireNotNull(id),
         categoryId = requireNotNull(category.id),
         name = name,
+        description = description,
         graphType = graphType,
         width = width,
         ordering = ordering,

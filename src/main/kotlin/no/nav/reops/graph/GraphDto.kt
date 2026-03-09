@@ -6,6 +6,7 @@ data class GraphDto(
     val id: Long,
     val categoryId: Long,
     val name: String,
+    val description: String?,
     val graphType: GraphType?,
     val width: Int,
     val ordering: Int,
@@ -14,12 +15,14 @@ data class GraphDto(
 
 data class CreateGraphRequest(
     val name: String,
+    val description: String? = null,
     val graphType: GraphType?,
     val width: Int? = null,
 )
 
 data class UpdateGraphRequest(
     val name: String,
+    val description: String? = null,
     val graphType: GraphType?,
     val width: Int? = null,
 )

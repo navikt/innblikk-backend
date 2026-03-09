@@ -34,6 +34,8 @@ class GraphEntity(
 
     @Column(name = "name", nullable = false) var name: String,
 
+    @Column(name = "description") var description: String? = null,
+
     @Enumerated(EnumType.STRING) @Column(name = "graph_type") var graphType: GraphType? = null,
 
     @Column(name = "width", nullable = false) var width: Int = 50,

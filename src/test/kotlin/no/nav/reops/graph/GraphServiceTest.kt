@@ -59,7 +59,7 @@ class GraphServiceTest {
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
-        val result = graphService.createGraph(1L, CreateGraphRequest("graph", GraphType.LINE))
+        val result = graphService.createGraph(1L, CreateGraphRequest("graph", graphType = GraphType.LINE))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -82,7 +82,7 @@ class GraphServiceTest {
         whenever(graphCategoryRepository.findById(99L)).thenReturn(Optional.empty())
 
         assertThatThrownBy {
-            graphService.createGraph(99L, CreateGraphRequest("graph", null))
+            graphService.createGraph(99L, CreateGraphRequest("graph", graphType = null))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Category 99 not found")
     }
@@ -96,7 +96,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(true)
 
         assertThatThrownBy {
-            graphService.createGraph(1L, CreateGraphRequest("graph", null))
+            graphService.createGraph(1L, CreateGraphRequest("graph", graphType = null))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Graph with name 'graph' already exists in category 1")
     }
@@ -163,7 +163,7 @@ class GraphServiceTest {
     fun `updateGraph returns null when graph missing`() {
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(null)
 
-        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("name", null))
+        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("name", graphType = null))
 
         assertThat(result).isNull()
     }
@@ -184,7 +184,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(true)
 
         assertThatThrownBy {
-            graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", null))
+            graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", graphType = null))
         }.isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("Graph with name 'new' already exists in category 1")
     }
@@ -205,7 +205,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
 
-        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", GraphType.LINE))
+        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", graphType = GraphType.LINE))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -276,7 +276,7 @@ class GraphServiceTest {
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(3)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
-        graphService.createGraph(1L, CreateGraphRequest("new", null))
+        graphService.createGraph(1L, CreateGraphRequest("new", graphType = null))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -320,7 +320,7 @@ class GraphServiceTest {
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
 
-        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("same", GraphType.PIE))
+        val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("same", graphType = GraphType.PIE))
 
         assertThat(result).isNotNull
         assertThat(result!!.graphType).isEqualTo(GraphType.PIE)
@@ -346,7 +346,7 @@ class GraphServiceTest {
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
-        graphService.createGraph(1L, CreateGraphRequest("graph", null, 75))
+        graphService.createGraph(1L, CreateGraphRequest("graph", graphType = null, width = 75))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -371,7 +371,7 @@ class GraphServiceTest {
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
 
-        graphService.createGraph(1L, CreateGraphRequest("graph", null, null))
+        graphService.createGraph(1L, CreateGraphRequest("graph", graphType = null, width = null))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -394,7 +394,7 @@ class GraphServiceTest {
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
 
-        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", null, null))
+        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", graphType = null, width = null))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())
@@ -417,7 +417,7 @@ class GraphServiceTest {
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
 
-        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", null, 100))
+        graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", graphType = null, width = 100))
 
         val captor = argumentCaptor<GraphEntity>()
         verify(graphRepository).save(captor.capture())

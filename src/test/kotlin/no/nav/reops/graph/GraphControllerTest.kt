@@ -44,7 +44,7 @@ class GraphControllerTest(
     @Test
     fun `POST creates graph and returns 201`() {
         val dto = GraphDto(
-            id = 10L, categoryId = 3L, name = "graph", graphType = GraphType.LINE,
+            id = 10L, categoryId = 3L, name = "graph", description = null, graphType = GraphType.LINE,
             width = 50, ordering = 0, updatedAt = updatedAt,
         )
         whenever(graphService.createGraph(eq(3L), any())).thenReturn(dto)
@@ -93,8 +93,8 @@ class GraphControllerTest(
     @Test
     fun `GET returns all graphs with 200`() {
         val graphs = listOf(
-            GraphDto(id = 10L, categoryId = 3L, name = "first", graphType = GraphType.BAR, width = 50, ordering = 0, updatedAt = updatedAt),
-            GraphDto(id = 11L, categoryId = 3L, name = "second", graphType = null, width = 75, ordering = 1, updatedAt = updatedAt),
+            GraphDto(id = 10L, categoryId = 3L, name = "first", description = null, graphType = GraphType.BAR, width = 50, ordering = 0, updatedAt = updatedAt),
+            GraphDto(id = 11L, categoryId = 3L, name = "second", description = null, graphType = null, width = 75, ordering = 1, updatedAt = updatedAt),
         )
         whenever(graphService.getAllGraphs(3L)).thenReturn(graphs)
 
@@ -123,7 +123,7 @@ class GraphControllerTest(
     @Test
     fun `GET by id returns graph with 200`() {
         val dto = GraphDto(
-            id = 10L, categoryId = 3L, name = "graph", graphType = GraphType.PIE,
+            id = 10L, categoryId = 3L, name = "graph", description = null, graphType = GraphType.PIE,
             width = 50, ordering = 0, updatedAt = updatedAt,
         )
         whenever(graphService.getGraphById(3L, 10L)).thenReturn(dto)
@@ -150,7 +150,7 @@ class GraphControllerTest(
     @Test
     fun `PUT updates graph and returns 200`() {
         val dto = GraphDto(
-            id = 10L, categoryId = 3L, name = "updated", graphType = GraphType.TABLE,
+            id = 10L, categoryId = 3L, name = "updated", description = null, graphType = GraphType.TABLE,
             width = 100, ordering = 0, updatedAt = updatedAt,
         )
         whenever(graphService.updateGraph(eq(3L), eq(10L), any())).thenReturn(dto)
@@ -197,8 +197,8 @@ class GraphControllerTest(
 
     @Test
     fun `POST ordering updates ordering and returns 200`() {
-        val result1 = GraphDto(id = 10L, categoryId = 3L, name = "a", graphType = null, width = 50, ordering = 1, updatedAt = updatedAt)
-        val result2 = GraphDto(id = 11L, categoryId = 3L, name = "b", graphType = null, width = 50, ordering = 0, updatedAt = updatedAt)
+        val result1 = GraphDto(id = 10L, categoryId = 3L, name = "a", description = null, graphType = null, width = 50, ordering = 1, updatedAt = updatedAt)
+        val result2 = GraphDto(id = 11L, categoryId = 3L, name = "b", description = null, graphType = null, width = 50, ordering = 0, updatedAt = updatedAt)
         whenever(graphService.updateOrdering(eq(3L), any())).thenReturn(listOf(result2, result1))
 
         val result = mockMvc.post("$basePath/ordering") {
