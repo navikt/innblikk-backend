@@ -18,4 +18,5 @@ data class CreateDashboardRequest(
 data class UpdateDashboardRequest(
     val name: String,
     val description: String?,
+    val projectId: Long? = null,
 )

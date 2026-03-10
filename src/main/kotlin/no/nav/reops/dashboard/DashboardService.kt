@@ -46,7 +46,17 @@ class DashboardService(
     fun updateDashboard(projectId: Long, id: Long, request: UpdateDashboardRequest): DashboardDto? {
         val entity = dashboardRepository.findByIdAndProjectId(id, projectId) ?: return null
 
-        if (entity.name != request.name && dashboardRepository.existsByProjectIdAndName(projectId, request.name)) {
+        val targetProjectId = request.projectId ?: projectId
+
+        if (targetProjectId != projectId) {
+            val targetProject = projectRepository.findById(targetProjectId).orElseThrow {
+                IllegalArgumentException("Project $targetProjectId not found")
+            }
+            if (dashboardRepository.existsByProjectIdAndName(targetProjectId, request.name)) {
+                throw IllegalArgumentException("Dashboard with name '${request.name}' already exists in project $targetProjectId")
+            }
+            entity.project = targetProject
+        } else if (entity.name != request.name && dashboardRepository.existsByProjectIdAndName(projectId, request.name)) {
             throw IllegalArgumentException("Dashboard with name '${request.name}' already exists in project $projectId")
         }
 

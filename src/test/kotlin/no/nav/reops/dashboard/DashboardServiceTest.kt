@@ -282,5 +282,71 @@ class DashboardServiceTest {
         assertThat(captor.firstValue.description).isNull()
         assertThat(result.description).isNull()
     }
+
+    @Test
+    fun `updateDashboard moves dashboard to new project`() {
+        val oldProject = ProjectEntity(id = 1L, name = "old project")
+        val newProject = ProjectEntity(id = 2L, name = "new project")
+        val entity = DashboardEntity(
+            id = 10L,
+            project = oldProject,
+            name = "dashboard",
+            description = "desc",
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
+        whenever(projectRepository.findById(2L)).thenReturn(Optional.of(newProject))
+        whenever(dashboardRepository.existsByProjectIdAndName(2L, "dashboard")).thenReturn(false)
+        whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(entity)
+
+        val result = dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("dashboard", "desc", projectId = 2L))
+
+        val captor = argumentCaptor<DashboardEntity>()
+        verify(dashboardRepository).save(captor.capture())
+        assertThat(captor.firstValue.project).isEqualTo(newProject)
+
+        verify(changeService).createChange(10L, EntityType.DASHBOARD, ChangeType.UPDATED)
+        assertThat(result).isNotNull
+    }
+
+    @Test
+    fun `updateDashboard throws when target project not found`() {
+        val project = ProjectEntity(id = 1L, name = "project")
+        val entity = DashboardEntity(
+            id = 10L,
+            project = project,
+            name = "dashboard",
+            description = null,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
+        whenever(projectRepository.findById(99L)).thenReturn(Optional.empty())
+
+        assertThatThrownBy {
+            dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("dashboard", null, projectId = 99L))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Project 99 not found")
+    }
+
+    @Test
+    fun `updateDashboard throws when name exists in target project`() {
+        val oldProject = ProjectEntity(id = 1L, name = "old project")
+        val newProject = ProjectEntity(id = 2L, name = "new project")
+        val entity = DashboardEntity(
+            id = 10L,
+            project = oldProject,
+            name = "dashboard",
+            description = null,
+            updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
+        )
+        whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
+        whenever(projectRepository.findById(2L)).thenReturn(Optional.of(newProject))
+        whenever(dashboardRepository.existsByProjectIdAndName(2L, "dashboard")).thenReturn(true)
+
+        assertThatThrownBy {
+            dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("dashboard", null, projectId = 2L))
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Dashboard with name 'dashboard' already exists in project 2")
+    }
 }
 
