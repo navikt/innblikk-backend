@@ -7,4 +7,7 @@ data class ChangeDto(
     val entityType: EntityType,
     val changeType: ChangeType,
     val updatedAt: LocalDateTime,
+    val changedByEmail: String? = null,
+    val changedByName: String? = null,
+    val changedByNavIdent: String? = null,
 )

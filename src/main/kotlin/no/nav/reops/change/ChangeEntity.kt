@@ -22,6 +22,12 @@ class ChangeEntity(
     @Column(name = "change_type", nullable = false) @Enumerated(EnumType.STRING) var changeType: ChangeType,
 
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "changed_by_email") var changedByEmail: String? = null,
+
+    @Column(name = "changed_by_name") var changedByName: String? = null,
+
+    @Column(name = "changed_by_nav_ident") var changedByNavIdent: String? = null,
 )
 
 enum class ChangeType {

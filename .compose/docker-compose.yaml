@@ -41,6 +41,7 @@ services: # -- Postgres --
                     "aud": ["start-umami"],
                     "email": "start-umami@nav.no",
                     "name": "start-umami",
+                    "NAVident": "X123456",
                     "preferred_username": "start-umami@nav.no",
                     "oid": "start-umami@nav.no"
                   }
