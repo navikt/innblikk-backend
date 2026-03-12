@@ -32,9 +32,9 @@ class GraphCategoryService(
             ordering = maxOrdering + 1,
         )
 
-        return graphCategoryRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.GRAPH_CATEGORY, ChangeType.CREATED)
-        }
+        val saved = graphCategoryRepository.save(entity)
+        changeService.createChange(requireNotNull(saved.id), EntityType.GRAPH_CATEGORY, ChangeType.CREATED)
+        return saved.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -55,9 +55,9 @@ class GraphCategoryService(
 
         entity.name = request.name
 
-        return graphCategoryRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.GRAPH_CATEGORY, ChangeType.UPDATED)
-        }
+        val updated = graphCategoryRepository.save(entity)
+        changeService.createChange(requireNotNull(updated.id), EntityType.GRAPH_CATEGORY, ChangeType.UPDATED)
+        return updated.toDto()
     }
 
     @Transactional
@@ -90,12 +90,18 @@ class GraphCategoryService(
         return true
     }
 
-    private fun GraphCategoryEntity.toDto() = GraphCategoryDto(
-        id = requireNotNull(id),
-        dashboardId = requireNotNull(dashboard.id),
-        name = name,
-        ordering = ordering,
-        updatedAt = updatedAt,
-    )
+    private fun GraphCategoryEntity.toDto(): GraphCategoryDto {
+        val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.GRAPH_CATEGORY)
+        return GraphCategoryDto(
+            id = requireNotNull(id),
+            dashboardId = requireNotNull(dashboard.id),
+            name = name,
+            ordering = ordering,
+            updatedAt = updatedAt,
+            changedByEmail = latestChange?.changedByEmail,
+            changedByName = latestChange?.changedByName,
+            changedByNavIdent = latestChange?.changedByNavIdent,
+        )
+    }
 }
 

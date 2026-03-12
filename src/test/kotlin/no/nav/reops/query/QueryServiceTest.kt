@@ -1,5 +1,6 @@
 package no.nav.reops.query
 
+import no.nav.reops.change.ChangeDto
 import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
@@ -58,6 +59,17 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(
+            ChangeDto(
+                entityId = 10L,
+                entityType = EntityType.QUERY,
+                changeType = ChangeType.CREATED,
+                updatedAt = updatedAt,
+                changedByEmail = "test@nav.no",
+                changedByName = "Test User",
+                changedByNavIdent = "T123456",
+            )
+        )
 
         val result = queryService.createQuery(1L, CreateQueryRequest("query", "select 1"))
 
@@ -75,6 +87,9 @@ class QueryServiceTest {
         assertThat(result.name).isEqualTo("query")
         assertThat(result.sqlText).isEqualTo("select 1")
         assertThat(result.updatedAt).isEqualTo(updatedAt)
+        assertThat(result.changedByEmail).isEqualTo("test@nav.no")
+        assertThat(result.changedByName).isEqualTo("Test User")
+        assertThat(result.changedByNavIdent).isEqualTo("T123456")
     }
 
     @Test
@@ -170,6 +185,7 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.createQuery(1L, CreateQueryRequest("query", "SELECT 1"))
 
@@ -191,6 +207,7 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.createQuery(
             1L,
@@ -215,6 +232,7 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.createQuery(1L, CreateQueryRequest("query", "  select 1"))
 
@@ -249,6 +267,7 @@ class QueryServiceTest {
         )
         whenever(queryRepository.findByIdAndGraphId(10L, 1L)).thenReturn(entity)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.updateQuery(1L, 10L, UpdateQueryRequest("same", "select 2"))
 
@@ -274,6 +293,8 @@ class QueryServiceTest {
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
         whenever(queryRepository.findAllByGraphIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.getAllQuery(1L)
 
@@ -293,6 +314,7 @@ class QueryServiceTest {
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         whenever(queryRepository.findByIdAndGraphId(12L, 1L)).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(12L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.getQueryById(1L, 12L)
 
@@ -359,6 +381,7 @@ class QueryServiceTest {
         whenever(queryRepository.findByIdAndGraphId(10L, 1L)).thenReturn(entity)
         whenever(queryRepository.existsByGraphIdAndName(1L, "new")).thenReturn(false)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.updateQuery(1L, 10L, UpdateQueryRequest("new", "select 2"))
 
@@ -418,6 +441,7 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "query")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(-1)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.createQuery(
             1L,
@@ -439,6 +463,7 @@ class QueryServiceTest {
         )
         whenever(queryRepository.findByIdAndGraphId(10L, 1L)).thenReturn(entity)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         val result = queryService.updateQuery(
             1L,
@@ -474,6 +499,7 @@ class QueryServiceTest {
         whenever(queryRepository.existsByGraphIdAndName(1L, "new")).thenReturn(false)
         whenever(queryRepository.findMaxOrderingByGraphId(1L)).thenReturn(3)
         whenever(queryRepository.save(any<QueryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
 
         queryService.createQuery(1L, CreateQueryRequest("new", "select 2"))
 
@@ -528,6 +554,8 @@ class QueryServiceTest {
             .thenReturn(listOf(query1, query2))
         whenever(queryRepository.saveAll(any<Collection<QueryEntity>>()))
             .thenReturn(listOf(query1, query2))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.QUERY)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.QUERY)).thenReturn(null)
 
         val entries = listOf(
             QueryOrderingEntry(10L, 2),

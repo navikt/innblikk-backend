@@ -1,5 +1,6 @@
 package no.nav.reops.project
 
+import no.nav.reops.change.ChangeDto
 import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
@@ -44,6 +45,17 @@ class ProjectServiceTest {
         )
 
         whenever(projectRepository.save(any<ProjectEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.PROJECT)).thenReturn(
+            ChangeDto(
+                entityId = 1L,
+                entityType = EntityType.PROJECT,
+                changeType = ChangeType.CREATED,
+                updatedAt = updatedAt,
+                changedByEmail = "test@nav.no",
+                changedByName = "Test User",
+                changedByNavIdent = "T123456",
+            )
+        )
 
         val result = projectService.createProject(CreateProjectRequest("project", "desc"))
 
@@ -58,6 +70,9 @@ class ProjectServiceTest {
         assertThat(result.name).isEqualTo("project")
         assertThat(result.description).isEqualTo("desc")
         assertThat(result.updatedAt).isEqualTo(updatedAt)
+        assertThat(result.changedByEmail).isEqualTo("test@nav.no")
+        assertThat(result.changedByName).isEqualTo("Test User")
+        assertThat(result.changedByNavIdent).isEqualTo("T123456")
     }
 
     @Test
@@ -75,6 +90,8 @@ class ProjectServiceTest {
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
         whenever(projectRepository.findAll()).thenReturn(listOf(first, second))
+        whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.PROJECT)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(2L, EntityType.PROJECT)).thenReturn(null)
 
         val result = projectService.getAllProjects()
 
@@ -92,6 +109,7 @@ class ProjectServiceTest {
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         whenever(projectRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.PROJECT)).thenReturn(null)
 
         val result = projectService.getProjectById(1L)
 
@@ -129,6 +147,7 @@ class ProjectServiceTest {
         )
         whenever(projectRepository.findById(10L)).thenReturn(Optional.of(entity))
         whenever(projectRepository.save(any<ProjectEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.PROJECT)).thenReturn(null)
 
         val result = projectService.updateProject(10L, UpdateProjectRequest("new", "new desc"))
 
@@ -175,6 +194,7 @@ class ProjectServiceTest {
         )
 
         whenever(projectRepository.save(any<ProjectEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.PROJECT)).thenReturn(null)
 
         val result = projectService.createProject(CreateProjectRequest("project", null))
 

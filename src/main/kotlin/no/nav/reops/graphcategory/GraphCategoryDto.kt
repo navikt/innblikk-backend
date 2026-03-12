@@ -8,6 +8,9 @@ data class GraphCategoryDto(
     val name: String,
     val ordering: Int,
     val updatedAt: LocalDateTime,
+    val changedByEmail: String? = null,
+    val changedByName: String? = null,
+    val changedByNavIdent: String? = null,
 )
 
 data class CreateGraphCategoryRequest(

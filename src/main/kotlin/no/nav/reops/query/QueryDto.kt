@@ -9,6 +9,9 @@ data class QueryDto(
     val sqlText: String,
     val ordering: Int,
     val updatedAt: LocalDateTime,
+    val changedByEmail: String? = null,
+    val changedByName: String? = null,
+    val changedByNavIdent: String? = null,
 )
 
 data class CreateQueryRequest(

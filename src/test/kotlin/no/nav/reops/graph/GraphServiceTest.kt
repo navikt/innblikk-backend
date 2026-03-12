@@ -1,5 +1,6 @@
 package no.nav.reops.graph
 
+import no.nav.reops.change.ChangeDto
 import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
@@ -58,6 +59,17 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(
+            ChangeDto(
+                entityId = 10L,
+                entityType = EntityType.GRAPH,
+                changeType = ChangeType.CREATED,
+                updatedAt = updatedAt,
+                changedByEmail = "test@nav.no",
+                changedByName = "Test User",
+                changedByNavIdent = "T123456",
+            )
+        )
 
         val result = graphService.createGraph(1L, CreateGraphRequest("graph", graphType = GraphType.LINE))
 
@@ -75,6 +87,9 @@ class GraphServiceTest {
         assertThat(result.name).isEqualTo("graph")
         assertThat(result.graphType).isEqualTo(GraphType.LINE)
         assertThat(result.updatedAt).isEqualTo(updatedAt)
+        assertThat(result.changedByEmail).isEqualTo("test@nav.no")
+        assertThat(result.changedByName).isEqualTo("Test User")
+        assertThat(result.changedByNavIdent).isEqualTo("T123456")
     }
 
     @Test
@@ -121,6 +136,8 @@ class GraphServiceTest {
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
         whenever(graphRepository.findAllByCategoryIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.GRAPH)).thenReturn(null)
 
         val result = graphService.getAllGraphs(1L)
 
@@ -142,6 +159,7 @@ class GraphServiceTest {
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         whenever(graphRepository.findByIdAndCategoryId(12L, 1L)).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(12L, EntityType.GRAPH)).thenReturn(null)
 
         val result = graphService.getGraphById(1L, 12L)
 
@@ -204,6 +222,7 @@ class GraphServiceTest {
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("new", graphType = GraphType.LINE))
 
@@ -275,6 +294,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "new")).thenReturn(false)
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(3)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         graphService.createGraph(1L, CreateGraphRequest("new", graphType = null))
 
@@ -319,6 +339,7 @@ class GraphServiceTest {
         )
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         val result = graphService.updateGraph(1L, 10L, UpdateGraphRequest("same", graphType = GraphType.PIE))
 
@@ -345,6 +366,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         graphService.createGraph(1L, CreateGraphRequest("graph", graphType = null, width = 75))
 
@@ -370,6 +392,7 @@ class GraphServiceTest {
         whenever(graphRepository.existsByCategoryIdAndName(1L, "graph")).thenReturn(false)
         whenever(graphRepository.findMaxOrderingByCategoryId(1L)).thenReturn(-1)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         graphService.createGraph(1L, CreateGraphRequest("graph", graphType = null, width = null))
 
@@ -393,6 +416,7 @@ class GraphServiceTest {
         )
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", graphType = null, width = null))
 
@@ -416,6 +440,7 @@ class GraphServiceTest {
         )
         whenever(graphRepository.findByIdAndCategoryId(10L, 1L)).thenReturn(entity)
         whenever(graphRepository.save(any<GraphEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
 
         graphService.updateGraph(1L, 10L, UpdateGraphRequest("graph", graphType = null, width = 100))
 
@@ -460,6 +485,8 @@ class GraphServiceTest {
             .thenReturn(listOf(graph1, graph2))
         whenever(graphRepository.saveAll(any<Collection<GraphEntity>>()))
             .thenReturn(listOf(graph1, graph2))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.GRAPH)).thenReturn(null)
 
         val entries = listOf(
             GraphOrderingEntry(10L, 2),

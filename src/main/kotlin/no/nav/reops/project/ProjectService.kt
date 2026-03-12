@@ -16,9 +16,8 @@ class ProjectService(private val projectRepository: ProjectRepository, private v
             name = request.name, description = request.description
         )
         val saved = projectRepository.save(project)
-        return saved.toDto().also {
-            changeService.createChange(it.id, EntityType.PROJECT, ChangeType.CREATED)
-        }
+        changeService.createChange(requireNotNull(saved.id), EntityType.PROJECT, ChangeType.CREATED)
+        return saved.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -37,9 +36,8 @@ class ProjectService(private val projectRepository: ProjectRepository, private v
         project.name = request.name
         project.description = request.description
         val updated = projectRepository.save(project)
-        return updated.toDto().also {
-            changeService.createChange(it.id, EntityType.PROJECT, ChangeType.UPDATED)
-        }
+        changeService.createChange(requireNotNull(updated.id), EntityType.PROJECT, ChangeType.UPDATED)
+        return updated.toDto()
     }
 
     @Transactional
@@ -53,7 +51,16 @@ class ProjectService(private val projectRepository: ProjectRepository, private v
         return true
     }
 
-    private fun ProjectEntity.toDto() = ProjectDto(
-        id = requireNotNull(id), name = name, description = description, updatedAt = updatedAt
-    )
+    private fun ProjectEntity.toDto(): ProjectDto {
+        val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.PROJECT)
+        return ProjectDto(
+            id = requireNotNull(id),
+            name = name,
+            description = description,
+            updatedAt = updatedAt,
+            changedByEmail = latestChange?.changedByEmail,
+            changedByName = latestChange?.changedByName,
+            changedByNavIdent = latestChange?.changedByNavIdent,
+        )
+    }
 }
