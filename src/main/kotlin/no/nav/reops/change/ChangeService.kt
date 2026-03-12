@@ -17,9 +17,9 @@ class ChangeService(
             entityId = entityId,
             entityType = entityType,
             changeType = changeType,
-            changedByEmail = user?.email,
-            changedByName = user?.name,
-            changedByNavIdent = user?.navIdent,
+            changedByEmail = user?.email.orEmpty(),
+            changedByName = user?.name.orEmpty(),
+            changedByNavIdent = user?.navIdent.orEmpty(),
         )
         val savedEntity = changeRepository.save(entity)
         return savedEntity.toDto()

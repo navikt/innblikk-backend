@@ -23,11 +23,11 @@ class ChangeEntity(
 
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 
-    @Column(name = "changed_by_email") var changedByEmail: String? = null,
+    @Column(name = "changed_by_email", nullable = false) var changedByEmail: String = "",
 
-    @Column(name = "changed_by_name") var changedByName: String? = null,
+    @Column(name = "changed_by_name", nullable = false) var changedByName: String = "",
 
-    @Column(name = "changed_by_nav_ident") var changedByNavIdent: String? = null,
+    @Column(name = "changed_by_nav_ident", nullable = false) var changedByNavIdent: String = "",
 )
 
 enum class ChangeType {
