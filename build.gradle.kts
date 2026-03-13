@@ -2,7 +2,7 @@ plugins {
 	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.graalvm.buildtools.native") version "0.11.5"
-	id("org.hibernate.orm") version "7.2.4.Final"
+	id("org.hibernate.orm") version "7.2.6.Final"
 	kotlin("jvm") version "2.3.10"
 	kotlin("plugin.spring") version "2.3.10"
 	kotlin("plugin.jpa") version "2.3.10"
@@ -48,7 +48,7 @@ dependencies {
 	testImplementation("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.assertj:assertj-core")
 	testImplementation("io.zonky.test:embedded-postgres:2.2.2")
-	testImplementation("io.zonky.test:embedded-database-spring-test:2.7.1")
+	testImplementation("io.zonky.test:embedded-database-spring-test:2.8.0")
 	testImplementation("org.postgresql:postgresql")
 	testImplementation("org.flywaydb.flyway-test-extensions:flyway-spring-test:10.0.0")
 }
