@@ -1,5 +1,6 @@
 package no.nav.reops.graphcategory
 
+import no.nav.reops.change.ChangeDto
 import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
@@ -56,6 +57,17 @@ class GraphCategoryServiceTest {
         whenever(graphCategoryRepository.existsByDashboardIdAndName(1L, "tab1")).thenReturn(false)
         whenever(graphCategoryRepository.findMaxOrderingByDashboardId(1L)).thenReturn(-1)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(
+            ChangeDto(
+                entityId = 10L,
+                entityType = EntityType.GRAPH_CATEGORY,
+                changeType = ChangeType.CREATED,
+                updatedAt = updatedAt,
+                changedByEmail = "test@nav.no",
+                changedByName = "Test User",
+                changedByNavIdent = "T123456",
+            )
+        )
 
         val result = graphCategoryService.createCategory(1L, CreateGraphCategoryRequest("tab1"))
 
@@ -71,6 +83,9 @@ class GraphCategoryServiceTest {
         assertThat(result.dashboardId).isEqualTo(1L)
         assertThat(result.name).isEqualTo("tab1")
         assertThat(result.updatedAt).isEqualTo(updatedAt)
+        assertThat(result.changedByEmail).isEqualTo("test@nav.no")
+        assertThat(result.changedByName).isEqualTo("Test User")
+        assertThat(result.changedByNavIdent).isEqualTo("T123456")
     }
 
     @Test
@@ -115,6 +130,8 @@ class GraphCategoryServiceTest {
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
         whenever(graphCategoryRepository.findAllByDashboardIdOrderByOrderingAsc(1L)).thenReturn(listOf(first, second))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         val result = graphCategoryService.getAllCategories(1L)
 
@@ -135,6 +152,7 @@ class GraphCategoryServiceTest {
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         whenever(graphCategoryRepository.findByIdAndDashboardId(12L, 1L)).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(12L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         val result = graphCategoryService.getCategoryById(1L, 12L)
 
@@ -195,6 +213,7 @@ class GraphCategoryServiceTest {
         whenever(graphCategoryRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
         whenever(graphCategoryRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(false)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         val result = graphCategoryService.updateCategory(1L, 10L, UpdateGraphCategoryRequest("new"))
 
@@ -260,6 +279,7 @@ class GraphCategoryServiceTest {
         whenever(graphCategoryRepository.existsByDashboardIdAndName(1L, "new")).thenReturn(false)
         whenever(graphCategoryRepository.findMaxOrderingByDashboardId(1L)).thenReturn(3)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         graphCategoryService.createCategory(1L, CreateGraphCategoryRequest("new"))
 
@@ -303,6 +323,7 @@ class GraphCategoryServiceTest {
         )
         whenever(graphCategoryRepository.findByIdAndDashboardId(10L, 1L)).thenReturn(entity)
         whenever(graphCategoryRepository.save(any<GraphCategoryEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         val result = graphCategoryService.updateCategory(1L, 10L, UpdateGraphCategoryRequest("same"))
 
@@ -344,6 +365,8 @@ class GraphCategoryServiceTest {
             .thenReturn(listOf(cat1, cat2))
         whenever(graphCategoryRepository.saveAll(any<Collection<GraphCategoryEntity>>()))
             .thenReturn(listOf(cat1, cat2))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.GRAPH_CATEGORY)).thenReturn(null)
 
         val entries = listOf(
             GraphCategoryOrderingEntry(10L, 2),

@@ -1,5 +1,6 @@
 package no.nav.reops.dashboard
 
+import no.nav.reops.change.ChangeDto
 import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
@@ -53,6 +54,17 @@ class DashboardServiceTest {
         whenever(projectRepository.findById(1L)).thenReturn(Optional.of(project))
         whenever(dashboardRepository.existsByProjectIdAndName(1L, "dashboard")).thenReturn(false)
         whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(
+            ChangeDto(
+                entityId = 10L,
+                entityType = EntityType.DASHBOARD,
+                changeType = ChangeType.CREATED,
+                updatedAt = updatedAt,
+                changedByEmail = "test@nav.no",
+                changedByName = "Test User",
+                changedByNavIdent = "T123456",
+            )
+        )
 
         val result = dashboardService.createDashboard(1L, CreateDashboardRequest("dashboard", "desc"))
 
@@ -69,6 +81,9 @@ class DashboardServiceTest {
         assertThat(result.name).isEqualTo("dashboard")
         assertThat(result.description).isEqualTo("desc")
         assertThat(result.updatedAt).isEqualTo(updatedAt)
+        assertThat(result.changedByEmail).isEqualTo("test@nav.no")
+        assertThat(result.changedByName).isEqualTo("Test User")
+        assertThat(result.changedByNavIdent).isEqualTo("T123456")
     }
 
     @Test
@@ -111,6 +126,8 @@ class DashboardServiceTest {
             updatedAt = LocalDateTime.of(2025, 2, 3, 4, 5, 6),
         )
         whenever(dashboardRepository.findAllByProjectId(1L)).thenReturn(listOf(first, second))
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(null)
+        whenever(changeService.getChangeByEntityIdAndEntityType(11L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.getAllDashboards(1L)
 
@@ -130,6 +147,7 @@ class DashboardServiceTest {
             updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5),
         )
         whenever(dashboardRepository.findByIdAndProjectId(12L, 1L)).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(12L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.getDashboardById(1L, 12L)
 
@@ -188,6 +206,7 @@ class DashboardServiceTest {
         whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
         whenever(dashboardRepository.existsByProjectIdAndName(1L, "new")).thenReturn(false)
         whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("new", "new desc"))
 
@@ -243,6 +262,7 @@ class DashboardServiceTest {
         )
         whenever(dashboardRepository.findByIdAndProjectId(10L, 1L)).thenReturn(entity)
         whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("same", "new desc"))
 
@@ -274,6 +294,7 @@ class DashboardServiceTest {
         whenever(projectRepository.findById(1L)).thenReturn(Optional.of(project))
         whenever(dashboardRepository.existsByProjectIdAndName(1L, "dashboard")).thenReturn(false)
         whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(savedEntity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.createDashboard(1L, CreateDashboardRequest("dashboard", null))
 
@@ -298,6 +319,7 @@ class DashboardServiceTest {
         whenever(projectRepository.findById(2L)).thenReturn(Optional.of(newProject))
         whenever(dashboardRepository.existsByProjectIdAndName(2L, "dashboard")).thenReturn(false)
         whenever(dashboardRepository.save(any<DashboardEntity>())).thenReturn(entity)
+        whenever(changeService.getChangeByEntityIdAndEntityType(10L, EntityType.DASHBOARD)).thenReturn(null)
 
         val result = dashboardService.updateDashboard(1L, 10L, UpdateDashboardRequest("dashboard", "desc", projectId = 2L))
 

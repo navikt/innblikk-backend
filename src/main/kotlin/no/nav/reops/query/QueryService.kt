@@ -32,9 +32,9 @@ class QueryService(
             graph = graph, name = request.name, sqlText = request.sqlText, ordering = maxOrdering + 1
         )
 
-        return queryRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.QUERY, ChangeType.CREATED)
-        }
+        val saved = queryRepository.save(entity)
+        changeService.createChange(requireNotNull(saved.id), EntityType.QUERY, ChangeType.CREATED)
+        return saved.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -57,9 +57,9 @@ class QueryService(
         entity.name = request.name
         entity.sqlText = request.sqlText
 
-        return queryRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.QUERY, ChangeType.UPDATED)
-        }
+        val updated = queryRepository.save(entity)
+        changeService.createChange(requireNotNull(updated.id), EntityType.QUERY, ChangeType.UPDATED)
+        return updated.toDto()
     }
 
     @Transactional
@@ -109,12 +109,18 @@ class QueryService(
         }
     }
 
-    private fun QueryEntity.toDto() = QueryDto(
-        id = requireNotNull(id),
-        graphId = requireNotNull(graph.id),
-        name = name,
-        sqlText = sqlText,
-        ordering = ordering,
-        updatedAt = updatedAt,
-    )
+    private fun QueryEntity.toDto(): QueryDto {
+        val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.QUERY)
+        return QueryDto(
+            id = requireNotNull(id),
+            graphId = requireNotNull(graph.id),
+            name = name,
+            sqlText = sqlText,
+            ordering = ordering,
+            updatedAt = updatedAt,
+            changedByEmail = latestChange?.changedByEmail,
+            changedByName = latestChange?.changedByName,
+            changedByNavIdent = latestChange?.changedByNavIdent,
+        )
+    }
 }

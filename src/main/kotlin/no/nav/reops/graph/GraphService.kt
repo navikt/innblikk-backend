@@ -35,9 +35,9 @@ class GraphService(
             ordering = maxOrdering + 1,
         )
 
-        return graphRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.GRAPH, ChangeType.CREATED)
-        }
+        val saved = graphRepository.save(entity)
+        changeService.createChange(requireNotNull(saved.id), EntityType.GRAPH, ChangeType.CREATED)
+        return saved.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -61,9 +61,9 @@ class GraphService(
         entity.graphType = request.graphType
         entity.width = request.width ?: entity.width
 
-        return graphRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.GRAPH, ChangeType.UPDATED)
-        }
+        val updated = graphRepository.save(entity)
+        changeService.createChange(requireNotNull(updated.id), EntityType.GRAPH, ChangeType.UPDATED)
+        return updated.toDto()
     }
 
     @Transactional
@@ -96,14 +96,20 @@ class GraphService(
         return true
     }
 
-    private fun GraphEntity.toDto() = GraphDto(
-        id = requireNotNull(id),
-        categoryId = requireNotNull(category.id),
-        name = name,
-        description = description,
-        graphType = graphType,
-        width = width,
-        ordering = ordering,
-        updatedAt = updatedAt,
-    )
+    private fun GraphEntity.toDto(): GraphDto {
+        val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.GRAPH)
+        return GraphDto(
+            id = requireNotNull(id),
+            categoryId = requireNotNull(category.id),
+            name = name,
+            description = description,
+            graphType = graphType,
+            width = width,
+            ordering = ordering,
+            updatedAt = updatedAt,
+            changedByEmail = latestChange?.changedByEmail,
+            changedByName = latestChange?.changedByName,
+            changedByNavIdent = latestChange?.changedByNavIdent,
+        )
+    }
 }

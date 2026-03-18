@@ -20,7 +20,8 @@
 ```
 curl -s -X POST "http://localhost:8080/issueissue/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials&client_id=start-umami&client_secret=unused&audience=start-umami" \
+  -d 'grant_type=client_credentials&client_id=start-umami&client_secret=unused&audience=start-umami' \
+  -d 'claims={"preferred_username":"test@nav.no","name":"Test User","NAVident":"T123456"}' \
   | jq -r .access_token
 ```
 #### Bruk jwt token i header

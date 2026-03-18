@@ -1,17 +1,25 @@
 package no.nav.reops.change
 
+import no.nav.reops.security.AuthenticatedUserProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class ChangeService(private val changeRepository: ChangeRepository) {
+class ChangeService(
+    private val changeRepository: ChangeRepository,
+    private val authenticatedUserProvider: AuthenticatedUserProvider,
+) {
 
     @Transactional
     fun createChange(entityId: Long, entityType: EntityType, changeType: ChangeType): ChangeDto {
+        val user = authenticatedUserProvider.getCurrentUser()
         val entity = ChangeEntity(
             entityId = entityId,
             entityType = entityType,
-            changeType = changeType
+            changeType = changeType,
+            changedByEmail = user?.email.orEmpty(),
+            changedByName = user?.name.orEmpty(),
+            changedByNavIdent = user?.navIdent.orEmpty(),
         )
         val savedEntity = changeRepository.save(entity)
         return savedEntity.toDto()
@@ -30,6 +38,9 @@ class ChangeService(private val changeRepository: ChangeRepository) {
         entityType = entityType,
         changeType = changeType,
         updatedAt = updatedAt,
+        changedByEmail = changedByEmail,
+        changedByName = changedByName,
+        changedByNavIdent = changedByNavIdent,
     )
 
 }

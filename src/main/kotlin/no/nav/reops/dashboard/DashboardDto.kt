@@ -8,6 +8,9 @@ data class DashboardDto(
     val name: String,
     val description: String?,
     val updatedAt: LocalDateTime,
+    val changedByEmail: String? = null,
+    val changedByName: String? = null,
+    val changedByNavIdent: String? = null,
 )
 
 data class CreateDashboardRequest(

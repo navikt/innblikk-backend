@@ -29,9 +29,9 @@ class DashboardService(
             description = request.description,
         )
 
-        return dashboardRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.DASHBOARD, ChangeType.CREATED)
-        }
+        val saved = dashboardRepository.save(entity)
+        changeService.createChange(requireNotNull(saved.id), EntityType.DASHBOARD, ChangeType.CREATED)
+        return saved.toDto()
     }
 
     @Transactional(readOnly = true)
@@ -63,9 +63,9 @@ class DashboardService(
         entity.name = request.name
         entity.description = request.description
 
-        return dashboardRepository.save(entity).toDto().also {
-            changeService.createChange(it.id, EntityType.DASHBOARD, ChangeType.UPDATED)
-        }
+        val updated = dashboardRepository.save(entity)
+        changeService.createChange(requireNotNull(updated.id), EntityType.DASHBOARD, ChangeType.UPDATED)
+        return updated.toDto()
     }
 
     @Transactional
@@ -77,11 +77,17 @@ class DashboardService(
         return true
     }
 
-    private fun DashboardEntity.toDto() = DashboardDto(
-        id = requireNotNull(id),
-        projectId = requireNotNull(project.id),
-        name = name,
-        description = description,
-        updatedAt = updatedAt,
-    )
+    private fun DashboardEntity.toDto(): DashboardDto {
+        val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.DASHBOARD)
+        return DashboardDto(
+            id = requireNotNull(id),
+            projectId = requireNotNull(project.id),
+            name = name,
+            description = description,
+            updatedAt = updatedAt,
+            changedByEmail = latestChange?.changedByEmail,
+            changedByName = latestChange?.changedByName,
+            changedByNavIdent = latestChange?.changedByNavIdent,
+        )
+    }
 }
