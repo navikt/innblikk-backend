@@ -42,7 +42,7 @@ springdoc:
     enabled: true
     path: /api/swagger-ui
     url: /api/openapi
-    order: ["Project", "Dashboard", "GraphCategory", "Graph", "Query", "Change"]
+    order: ["Project", "Dashboard", "GraphCategory", "Graph", "Query", "Sidegroup"]
 
 server:
   http2:

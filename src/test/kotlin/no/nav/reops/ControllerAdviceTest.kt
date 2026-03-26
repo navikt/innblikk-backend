@@ -7,6 +7,7 @@ import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
@@ -28,6 +29,9 @@ class TestErrorController {
 
     @GetMapping("/test/boom")
     fun boom(): String = throw RuntimeException("super-secret-details")
+
+    @GetMapping("/test/duplicate")
+    fun duplicate(): String = throw DataIntegrityViolationException("duplicate key value violates unique constraint \"uq_sidegroups_name\"")
 }
 
 @WebMvcTest(
@@ -86,6 +90,19 @@ class ControllerAdviceTest(
         assertThat(body).contains("\"errorId\":")
         // don't leak the original exception message
         assertThat(body).doesNotContain("super-secret-details")
+    }
+
+    @Test
+    fun `DataIntegrityViolationException becomes 409 Conflict`() {
+        val result = mockMvc.get("/test/duplicate") {
+            accept = MediaType.APPLICATION_JSON
+        }.andReturn()
+
+        assertThat(result.response.status).isEqualTo(409)
+        val body = result.response.contentAsString
+        assertThat(body).contains("\"error\":\"NOT_ALLOWED\"")
+        assertThat(body).contains("\"errorId\":")
+        assertThat(body).doesNotContain("uq_sidegroups_name")
     }
 
     @Test

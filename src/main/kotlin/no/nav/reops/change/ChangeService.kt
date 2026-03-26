@@ -21,17 +21,12 @@ class ChangeService(
             changedByName = user?.name.orEmpty(),
             changedByNavIdent = user?.navIdent.orEmpty(),
         )
-        val savedEntity = changeRepository.save(entity)
-        return savedEntity.toDto()
+        return changeRepository.save(entity).toDto()
     }
 
     @Transactional(readOnly = true)
     fun getChangeByEntityIdAndEntityType(entityId: Long, entityType: EntityType) =
         changeRepository.findFirstByEntityTypeAndEntityIdOrderByUpdatedAtDesc(entityType, entityId)?.toDto()
-
-    @Transactional(readOnly = true)
-    fun getAllChangeByEntityIdAndEntityType(entityId: Long, entityType: EntityType) =
-        changeRepository.findByEntityTypeAndEntityIdOrderByUpdatedAtDesc(entityType, entityId).map { it.toDto() }
 
     private fun ChangeEntity.toDto() = ChangeDto(
         entityId = entityId,

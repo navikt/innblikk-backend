@@ -2,6 +2,7 @@ package no.nav.reops
 
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -60,7 +61,6 @@ class ControlAdvice {
         request: HttpServletRequest
     ): ResponseEntity<ErrorResponse> {
         val errorId = newErrorId()
-        // Don't leak parsing details (can include internal types / paths)
         LOG.info("Malformed JSON ({}) {} {}", errorId, request.method, request.requestURI, ex)
 
         val body = ErrorResponse(
@@ -93,6 +93,23 @@ class ControlAdvice {
             errorId = errorId,
         )
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body)
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(
+        ex: DataIntegrityViolationException,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorId = newErrorId()
+        LOG.info("Data integrity violation ({}) {} {}: {}", errorId, request.method, request.requestURI, ex.message)
+
+        val body = ErrorResponse(
+            error = "NOT_ALLOWED",
+            message = "Operation violates a database constraint",
+            status = HttpStatus.CONFLICT.value(),
+            errorId = errorId,
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body)
     }
 
     @ExceptionHandler(Exception::class)
