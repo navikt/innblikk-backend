@@ -19,6 +19,8 @@ class SidegroupService(
 
         val entity = SidegroupEntity(
             name = request.name,
+            description = request.description,
+            websiteId = request.websiteId,
             include = request.include ?: emptyList(),
             exclude = request.exclude ?: emptyList(),
             exact = request.exact ?: emptyList(),
@@ -41,6 +43,8 @@ class SidegroupService(
     fun updateSidegroup(id: Long, request: UpdateSidegroupRequest): SidegroupDto? {
         val entity = sidegroupRepository.findById(id).getOrNull() ?: return null
         entity.name = request.name
+        entity.description = request.description
+        request.websiteId?.let { entity.websiteId = it }
         request.include?.let { entity.include = it }
         request.exclude?.let { entity.exclude = it }
         request.exact?.let { entity.exact = it }
@@ -66,6 +70,8 @@ class SidegroupService(
         return SidegroupDto(
             id = requireNotNull(id),
             name = name,
+            description = description,
+            websiteId = websiteId,
             include = include,
             exclude = exclude,
             exact = exact,

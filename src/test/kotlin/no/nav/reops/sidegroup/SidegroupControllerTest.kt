@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import java.time.LocalDateTime
+import java.util.UUID
 
 @WebMvcTest(
     controllers = [SidegroupController::class],
@@ -38,6 +39,7 @@ class SidegroupControllerTest(
     }
 
     private val updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5)
+    private val websiteId = UUID.fromString("11111111-1111-1111-1111-111111111111")
 
     @Test
     fun `POST creates sidegroup and returns 201`() {
@@ -46,7 +48,7 @@ class SidegroupControllerTest(
 
         val result = mockMvc.post("/api/sidegroup") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"Product pages","include":["/products/","/shop/"],"exclude":["/products/archived/"]}"""
+            content = """{"name":"Product pages","websiteId":"11111111-1111-1111-1111-111111111111","include":["/products/","/shop/"],"exclude":["/products/archived/"]}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(201)
@@ -65,7 +67,7 @@ class SidegroupControllerTest(
 
         val result = mockMvc.post("/api/sidegroup") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"All pages"}"""
+            content = """{"name":"All pages","websiteId":"11111111-1111-1111-1111-111111111111"}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(201)
@@ -82,7 +84,7 @@ class SidegroupControllerTest(
 
         val result = mockMvc.post("/api/sidegroup") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"Product pages","include":["/products/"]}"""
+            content = """{"name":"Product pages","websiteId":"11111111-1111-1111-1111-111111111111","include":["/products/"]}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(400)
@@ -227,6 +229,8 @@ class SidegroupControllerTest(
     private fun sidegroupDto(
         id: Long,
         name: String = "sidegroup",
+        description: String? = null,
+        websiteId: UUID = this.websiteId,
         include: List<String> = emptyList(),
         exclude: List<String> = emptyList(),
         exact: List<String> = emptyList(),
@@ -235,6 +239,8 @@ class SidegroupControllerTest(
     ) = SidegroupDto(
         id = id,
         name = name,
+        description = description,
+        websiteId = websiteId,
         include = include,
         exclude = exclude,
         exact = exact,

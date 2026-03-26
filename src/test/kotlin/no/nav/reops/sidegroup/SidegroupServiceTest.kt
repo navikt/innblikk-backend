@@ -19,6 +19,7 @@ import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import java.time.LocalDateTime
 import java.util.Optional
+import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class SidegroupServiceTest {
@@ -32,6 +33,7 @@ class SidegroupServiceTest {
     private lateinit var sidegroupService: SidegroupService
 
     private val updatedAt = LocalDateTime.of(2025, 1, 2, 3, 4, 5)
+    private val websiteId = UUID.fromString("11111111-1111-1111-1111-111111111111")
 
     @BeforeEach
     fun setUp() {
@@ -58,6 +60,7 @@ class SidegroupServiceTest {
         val result = sidegroupService.createSidegroup(
             CreateSidegroupRequest(
                 name = "Product pages",
+                websiteId = websiteId,
                 include = listOf("/products/", "/shop/"),
                 exclude = listOf("/products/archived/"),
                 exact = listOf("/products/featured"),
@@ -69,6 +72,7 @@ class SidegroupServiceTest {
         val captor = argumentCaptor<SidegroupEntity>()
         verify(sidegroupRepository).save(captor.capture())
         assertThat(captor.firstValue.name).isEqualTo("Product pages")
+        assertThat(captor.firstValue.websiteId).isEqualTo(websiteId)
         assertThat(captor.firstValue.include).containsExactly("/products/", "/shop/")
         assertThat(captor.firstValue.exclude).containsExactly("/products/archived/")
         assertThat(captor.firstValue.exact).containsExactly("/products/featured")
@@ -96,7 +100,7 @@ class SidegroupServiceTest {
         whenever(sidegroupRepository.save(any<SidegroupEntity>())).thenReturn(saved)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.SIDEGROUP)).thenReturn(null)
 
-        val result = sidegroupService.createSidegroup(CreateSidegroupRequest(name = "All pages"))
+        val result = sidegroupService.createSidegroup(CreateSidegroupRequest(name = "All pages", websiteId = websiteId))
 
         val captor = argumentCaptor<SidegroupEntity>()
         verify(sidegroupRepository).save(captor.capture())
@@ -118,7 +122,7 @@ class SidegroupServiceTest {
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.SIDEGROUP)).thenReturn(null)
 
         val result = sidegroupService.createSidegroup(
-            CreateSidegroupRequest(name = "All pages", include = emptyList(), exclude = emptyList())
+            CreateSidegroupRequest(name = "All pages", websiteId = websiteId, include = emptyList(), exclude = emptyList())
         )
 
         val captor = argumentCaptor<SidegroupEntity>()
@@ -133,7 +137,7 @@ class SidegroupServiceTest {
         whenever(sidegroupRepository.existsByName("Product pages")).thenReturn(true)
 
         assertThatThrownBy {
-            sidegroupService.createSidegroup(CreateSidegroupRequest(name = "Product pages"))
+            sidegroupService.createSidegroup(CreateSidegroupRequest(name = "Product pages", websiteId = websiteId))
         }.isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("Product pages")
 
         verify(sidegroupRepository, never()).save(any<SidegroupEntity>())
@@ -352,6 +356,8 @@ class SidegroupServiceTest {
     private fun sidegroup(
         id: Long,
         name: String = "sidegroup",
+        description: String? = null,
+        websiteId: UUID = this.websiteId,
         include: List<String> = emptyList(),
         exclude: List<String> = emptyList(),
         exact: List<String> = emptyList(),
@@ -360,6 +366,8 @@ class SidegroupServiceTest {
     ) = SidegroupEntity(
         id = id,
         name = name,
+        description = description,
+        websiteId = websiteId,
         include = include,
         exclude = exclude,
         exact = exact,
