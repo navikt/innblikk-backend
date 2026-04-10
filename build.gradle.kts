@@ -1,11 +1,11 @@
 plugins {
-	id("org.springframework.boot") version "4.0.3"
+	id("org.springframework.boot") version "4.0.5"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.graalvm.buildtools.native") version "0.11.5"
-	id("org.hibernate.orm") version "7.2.4.Final"
-	kotlin("jvm") version "2.3.10"
-	kotlin("plugin.spring") version "2.3.10"
-	kotlin("plugin.jpa") version "2.3.10"
+	id("org.graalvm.buildtools.native") version "1.0.0"
+	id("org.hibernate.orm") version "7.3.0.Final"
+	kotlin("jvm") version "2.3.20"
+	kotlin("plugin.spring") version "2.3.20"
+	kotlin("plugin.jpa") version "2.3.20"
 }
 
 group = "no.nav.reops"
@@ -44,11 +44,11 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
 	testImplementation("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.assertj:assertj-core")
 	testImplementation("io.zonky.test:embedded-postgres:2.2.2")
-	testImplementation("io.zonky.test:embedded-database-spring-test:2.7.1")
+	testImplementation("io.zonky.test:embedded-database-spring-test:2.8.0")
 	testImplementation("org.postgresql:postgresql")
 	testImplementation("org.flywaydb.flyway-test-extensions:flyway-spring-test:10.0.0")
 }
