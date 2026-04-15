@@ -173,6 +173,29 @@ class SidegroupServiceTest {
     }
 
     @Test
+    fun `getSidegroupsByWebsiteId returns only sidegroups for given website`() {
+        val blogPages = sidegroup(id = 1L, name = "Blog pages", include = listOf("/blog/"))
+        whenever(sidegroupRepository.findAllByWebsiteId(websiteId)).thenReturn(listOf(blogPages))
+        whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.SIDEGROUP)).thenReturn(null)
+
+        val result = sidegroupService.getSidegroupsByWebsiteId(websiteId)
+
+        assertThat(result).hasSize(1)
+        assertThat(result[0].id).isEqualTo(1L)
+        assertThat(result[0].websiteId).isEqualTo(websiteId)
+    }
+
+    @Test
+    fun `getSidegroupsByWebsiteId returns empty list when no sidegroups for website`() {
+        val otherWebsiteId = UUID.fromString("22222222-2222-2222-2222-222222222222")
+        whenever(sidegroupRepository.findAllByWebsiteId(otherWebsiteId)).thenReturn(emptyList())
+
+        val result = sidegroupService.getSidegroupsByWebsiteId(otherWebsiteId)
+
+        assertThat(result).isEmpty()
+    }
+
+    @Test
     fun `getSidegroupById returns dto when found`() {
         val entity = sidegroup(id = 1L, name = "Blog pages", include = listOf("/blog/", "/articles/"))
         whenever(sidegroupRepository.findById(1L)).thenReturn(Optional.of(entity))

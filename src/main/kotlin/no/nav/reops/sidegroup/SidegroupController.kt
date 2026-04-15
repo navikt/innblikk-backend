@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @Tag(name = "Sidegroup")
@@ -19,9 +20,15 @@ class SidegroupController(private val sideGroupService: SidegroupService) {
     }
 
     @GetMapping
-    fun getAllSidegroup(): ResponseEntity<List<SidegroupDto>> {
-        val sidegroup = sideGroupService.getAllSidegroup()
-        return ResponseEntity.ok(sidegroup)
+    fun getAllSidegroup(
+        @RequestParam(required = false) websiteId: UUID?,
+    ): ResponseEntity<List<SidegroupDto>> {
+        val sidegroups = if (websiteId != null) {
+            sideGroupService.getSidegroupsByWebsiteId(websiteId)
+        } else {
+            sideGroupService.getAllSidegroup()
+        }
+        return ResponseEntity.ok(sidegroups)
     }
 
     @GetMapping("/{id}")

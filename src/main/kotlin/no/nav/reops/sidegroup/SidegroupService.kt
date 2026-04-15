@@ -5,6 +5,7 @@ import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
 @Service
@@ -35,6 +36,10 @@ class SidegroupService(
 
     @Transactional(readOnly = true)
     fun getAllSidegroup(): List<SidegroupDto> = sidegroupRepository.findAll().map { it.toDto() }
+
+    @Transactional(readOnly = true)
+    fun getSidegroupsByWebsiteId(websiteId: UUID): List<SidegroupDto> =
+        sidegroupRepository.findAllByWebsiteId(websiteId).map { it.toDto() }
 
     @Transactional(readOnly = true)
     fun getSidegroupById(id: Long): SidegroupDto? = sidegroupRepository.findById(id).getOrNull()?.toDto()

@@ -122,6 +122,22 @@ class SidegroupControllerTest(
     }
 
     @Test
+    fun `GET with websiteId filters by website`() {
+        val sidegroups = listOf(
+            sidegroupDto(id = 1L, name = "Blog pages", include = listOf("/blog/")),
+        )
+        whenever(sidegroupService.getSidegroupsByWebsiteId(websiteId)).thenReturn(sidegroups)
+
+        val result = mockMvc.get("/api/sidegroup?websiteId=$websiteId") {
+            accept = MediaType.APPLICATION_JSON
+        }.andReturn()
+
+        assertThat(result.response.status).isEqualTo(200)
+        val body = result.response.contentAsString
+        assertThat(body).contains("\"name\":\"Blog pages\"")
+    }
+
+    @Test
     fun `GET by id returns sidegroup with 200`() {
         val dto = sidegroupDto(id = 1L, name = "FAQ pages", exact = listOf("/faq", "/help/faq"))
         whenever(sidegroupService.getSidegroupById(1L)).thenReturn(dto)
