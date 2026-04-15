@@ -12,12 +12,21 @@ import no.nav.reops.project.ProjectEntity
 import no.nav.reops.project.ProjectRepository
 import no.nav.reops.query.QueryEntity
 import no.nav.reops.query.QueryRepository
+import no.nav.reops.cohort.CohortEntity
+import no.nav.reops.cohort.CohortEntryConditionEntity
+import no.nav.reops.cohort.CohortEntryEntity
+import no.nav.reops.cohort.CohortEntryRepository
+import no.nav.reops.cohort.CohortRepository
+import no.nav.reops.cohort.ConditionType
+import no.nav.reops.cohort.EntryCondition
+import no.nav.reops.cohort.EntryOperator
 import org.assertj.core.api.Assertions.assertThat
 import org.flywaydb.test.annotation.FlywayTest
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestConstructor
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Transactional
 @SpringBootTest
@@ -30,6 +39,8 @@ class RepositorySmokeTest(
     private val graphCategoryRepository: GraphCategoryRepository,
     private val graphRepository: GraphRepository,
     private val queryRepository: QueryRepository,
+    private val cohortRepository: CohortRepository,
+    private val cohortEntryRepository: CohortEntryRepository,
     private val entityManager: EntityManager,
 ) {
 
@@ -141,5 +152,63 @@ class RepositorySmokeTest(
         assertThat(loaded).isPresent
         assertThat(loaded.get().name).isEqualTo("query")
         assertThat(loaded.get().sqlText).isEqualTo("select 1")
+    }
+
+    @Test
+    fun `cohort repository can save and read`() {
+        val saved = cohortRepository.save(
+            CohortEntity(
+                websiteId = UUID.fromString("98c1936a-38a4-11f1-8197-5a715c0b0a36"),
+                name = "test cohort",
+            )
+        )
+        assertThat(saved.id).isNotNull()
+
+        entityManager.flush()
+        entityManager.clear()
+
+        val loaded = cohortRepository.findById(saved.id!!)
+        assertThat(loaded).isPresent
+        assertThat(loaded.get().name).isEqualTo("test cohort")
+    }
+
+    @Test
+    fun `cohort entry repository can save and read with conditions`() {
+        val cohort = cohortRepository.save(
+            CohortEntity(
+                websiteId = UUID.fromString("98c1936a-38a4-11f1-8197-5a715c0b0a36"),
+                name = "cohort for entries",
+            )
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val entry = CohortEntryEntity(
+            cohort = cohort,
+            condition = EntryCondition.NOT,
+            operator = null,
+        )
+        entry.conditions.add(
+            CohortEntryConditionEntity(
+                cohortEntry = entry,
+                ordering = 1,
+                conditionType = ConditionType.NOT_LIKE,
+                field = "platform",
+                value = "https://example.no",
+            )
+        )
+
+        val saved = cohortEntryRepository.save(entry)
+        assertThat(saved.id).isNotNull()
+
+        entityManager.flush()
+        entityManager.clear()
+
+        val loaded = cohortEntryRepository.findById(saved.id!!)
+        assertThat(loaded).isPresent
+        assertThat(loaded.get().condition).isEqualTo(EntryCondition.NOT)
+        assertThat(loaded.get().conditions).hasSize(1)
+        assertThat(loaded.get().conditions[0].conditionType).isEqualTo(ConditionType.NOT_LIKE)
+        assertThat(loaded.get().conditions[0].field).isEqualTo("platform")
     }
 }
