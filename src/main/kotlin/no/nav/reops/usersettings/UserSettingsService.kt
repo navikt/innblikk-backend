@@ -1,0 +1,30 @@
+package no.nav.reops.usersettings
+
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+class UserSettingsService(
+    private val userSettingsRepository: UserSettingsRepository,
+    private val userSettingValueRepository: UserSettingValueRepository,
+) {
+    @Transactional
+    fun upsertSettings(
+        navIdent: String,
+        request: UpsertUserSettingsRequest,
+    ): UpsertUserSettingsResponse {
+        userSettingsRepository.upsertUser(navIdent)
+        request.settings.forEach { (key, value) ->
+            userSettingValueRepository.upsertValue(
+                navIdent = navIdent,
+                key = key,
+                value = value,
+                analyticsId = request.analyticsId,
+            )
+        }
+        return UpsertUserSettingsResponse(
+            navIdent = navIdent,
+            settingsCount = request.settings.size,
+        )
+    }
+}
