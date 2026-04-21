@@ -29,7 +29,6 @@ class UserSettingsServiceTest {
     fun `upsertSettings upserts user and all setting values`() {
         val request = UpsertUserSettingsRequest(
             settings = mapOf("beta_opt_in" to "true", "grafbygger_always_show_sql" to "false"),
-            analyticsId = "analytics-uuid-123",
         )
 
         val result = userSettingsService.upsertSettings("Z123456", request)
@@ -39,13 +38,11 @@ class UserSettingsServiceTest {
             navIdent = "Z123456",
             key = "beta_opt_in",
             value = "true",
-            analyticsId = "analytics-uuid-123",
         )
         verify(userSettingValueRepository).upsertValue(
             navIdent = "Z123456",
             key = "grafbygger_always_show_sql",
             value = "false",
-            analyticsId = "analytics-uuid-123",
         )
         assertThat(result.navIdent).isEqualTo("Z123456")
         assertThat(result.settingsCount).isEqualTo(2)
@@ -55,7 +52,6 @@ class UserSettingsServiceTest {
     fun `upsertSettings handles empty settings map`() {
         val request = UpsertUserSettingsRequest(
             settings = emptyMap(),
-            analyticsId = null,
         )
 
         val result = userSettingsService.upsertSettings("Z123456", request)
@@ -63,25 +59,5 @@ class UserSettingsServiceTest {
         verify(userSettingsRepository).upsertUser("Z123456")
         verifyNoMoreInteractions(userSettingValueRepository)
         assertThat(result.settingsCount).isEqualTo(0)
-    }
-
-    @Test
-    fun `upsertSettings handles null analyticsId`() {
-        val request = UpsertUserSettingsRequest(
-            settings = mapOf("beta_opt_in" to "true"),
-            analyticsId = null,
-        )
-
-        val result = userSettingsService.upsertSettings("T654321", request)
-
-        verify(userSettingsRepository).upsertUser("T654321")
-        verify(userSettingValueRepository).upsertValue(
-            navIdent = "T654321",
-            key = "beta_opt_in",
-            value = "true",
-            analyticsId = null,
-        )
-        assertThat(result.navIdent).isEqualTo("T654321")
-        assertThat(result.settingsCount).isEqualTo(1)
     }
 }

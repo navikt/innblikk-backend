@@ -9,9 +9,9 @@ interface UserSettingValueRepository : JpaRepository<UserSettingValueEntity, Lon
     @Modifying
     @Query(
         value = """
-            INSERT INTO user_setting_values (nav_ident, setting_key, value, analytics_id, created_at, updated_at)
-            VALUES (:navIdent, :key, :value, :analyticsId, NOW(), NOW())
-            ON CONFLICT (nav_ident, analytics_id, setting_key) DO UPDATE
+            INSERT INTO user_setting_values (nav_ident, setting_key, value, created_at, updated_at)
+            VALUES (:navIdent, :key, :value, NOW(), NOW())
+            ON CONFLICT (nav_ident, setting_key) DO UPDATE
                 SET value      = EXCLUDED.value,
                     updated_at = NOW()
         """,
@@ -21,6 +21,5 @@ interface UserSettingValueRepository : JpaRepository<UserSettingValueEntity, Lon
         navIdent: String,
         key: String,
         value: String,
-        analyticsId: String?,
     )
 }

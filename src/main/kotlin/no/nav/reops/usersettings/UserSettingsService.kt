@@ -19,7 +19,6 @@ class UserSettingsService(
                 navIdent = navIdent,
                 key = key,
                 value = value,
-                analyticsId = request.analyticsId,
             )
         }
         return UpsertUserSettingsResponse(

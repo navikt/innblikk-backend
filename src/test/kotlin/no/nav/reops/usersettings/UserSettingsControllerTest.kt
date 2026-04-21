@@ -43,8 +43,7 @@ class UserSettingsControllerTest(
 
     private val validRequestBody = """
         {
-          "settings": {"beta_opt_in": "true", "grafbygger_always_show_sql": "false"},
-          "analyticsId": "analytics-uuid-123"
+          "settings": {"beta_opt_in": "true", "grafbygger_always_show_sql": "false"}
         }
     """.trimIndent()
 
@@ -99,25 +98,10 @@ class UserSettingsControllerTest(
 
         val result = mockMvc.put(basePath) {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"settings": {}, "analyticsId": null}"""
+            content = """{"settings": {}}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(200)
         assertThat(result.response.contentAsString).contains("\"settingsCount\":0")
-    }
-
-    @Test
-    fun `PUT handles null analyticsId`() {
-        val response = UpsertUserSettingsResponse(navIdent = "Z123456", settingsCount = 1)
-        whenever(authenticatedUserProvider.getCurrentUser())
-            .thenReturn(AuthenticatedUser(email = "test@nav.no", name = "Test User", navIdent = "Z123456"))
-        whenever(userSettingsService.upsertSettings(any(), any())).thenReturn(response)
-
-        val result = mockMvc.put(basePath) {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"settings": {"beta_opt_in": "true"}, "analyticsId": null}"""
-        }.andReturn()
-
-        assertThat(result.response.status).isEqualTo(200)
     }
 }

@@ -24,9 +24,6 @@ class UserSettingValueEntity(
     @Column(name = "value", nullable = false)
     var value: String,
 
-    @Column(name = "analytics_id")
-    val analyticsId: String?,
-
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
 
