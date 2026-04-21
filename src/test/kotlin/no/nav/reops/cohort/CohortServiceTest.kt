@@ -125,11 +125,11 @@ class CohortServiceTest {
     @Test
     fun `getCohortById returns detail dto with entries and conditions`() {
         val entity = cohort(id = 1L, name = "Test")
-        val entry = cohortEntry(id = 10L, cohort = entity, condition = EntryCondition.NOT, ordering = 0)
+        val entry = cohortEntry(id = 10L, cohort = entity, condition = EntryConditionType.NOT_PERFORMED, ordering = 0)
         entry.conditions.add(
             CohortEntryConditionEntity(
                 id = 100L, cohortEntry = entry, ordering = 1,
-                conditionType = ConditionType.NOT_LIKE, field = "platform", value = "https://example.no"
+                conditionType = ComparisonOperator.CONTAINS, field = "platform", value = "https://example.no"
             )
         )
         entity.entries.add(entry)
@@ -141,17 +141,17 @@ class CohortServiceTest {
         assertThat(result).isNotNull
         assertThat(result!!.id).isEqualTo(1L)
         assertThat(result.entries).hasSize(1)
-        assertThat(result.entries[0].condition).isEqualTo(EntryCondition.NOT)
+        assertThat(result.entries[0].condition).isEqualTo(EntryConditionType.NOT_PERFORMED)
         assertThat(result.entries[0].conditions).hasSize(1)
-        assertThat(result.entries[0].conditions[0].conditionType).isEqualTo(ConditionType.NOT_LIKE)
+        assertThat(result.entries[0].conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
         assertThat(result.entries[0].conditions[0].field).isEqualTo("platform")
     }
 
     @Test
     fun `getCohortById returns entries sorted by ordering`() {
         val entity = cohort(id = 1L, name = "Test")
-        entity.entries.add(cohortEntry(id = 11L, cohort = entity, condition = EntryCondition.DID, ordering = 1))
-        entity.entries.add(cohortEntry(id = 10L, cohort = entity, condition = EntryCondition.NOT, ordering = 0))
+        entity.entries.add(cohortEntry(id = 11L, cohort = entity, condition = EntryConditionType.PERFORMED, ordering = 1))
+        entity.entries.add(cohortEntry(id = 10L, cohort = entity, condition = EntryConditionType.NOT_PERFORMED, ordering = 0))
         whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
@@ -254,8 +254,8 @@ class CohortServiceTest {
     private fun cohortEntry(
         id: Long,
         cohort: CohortEntity,
-        condition: EntryCondition = EntryCondition.NOT,
-        operator: EntryOperator? = null,
+        condition: EntryConditionType = EntryConditionType.NOT_PERFORMED,
+        operator: LogicalOperator? = null,
         ordering: Int = 0,
     ) = CohortEntryEntity(
         id = id, cohort = cohort, condition = condition, operator = operator, ordering = ordering, updatedAt = updatedAt,

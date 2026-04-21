@@ -14,7 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import com.fasterxml.jackson.annotation.JsonValue
+
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -39,12 +39,16 @@ class CohortEntity(
 class CohortEntryEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "cohort_id", nullable = false) var cohort: CohortEntity,
-    @Enumerated(EnumType.STRING) @Column(name = "condition", nullable = false) var condition: EntryCondition,
-    @Enumerated(EnumType.STRING) @Column(name = "operator") var operator: EntryOperator? = null,
+    @Enumerated(EnumType.STRING) @Column(name = "condition", nullable = false) var condition: EntryConditionType,
+    @Enumerated(EnumType.STRING) @Column(name = "operator") var operator: LogicalOperator? = null,
+    @Column(name = "referenced_cohort_id") var referencedCohortId: Long? = null,
+    @Enumerated(EnumType.STRING) @Column(name = "time_scope") var timeScope: TimeScope? = null,
+    @Enumerated(EnumType.STRING) @Column(name = "time_range_type") var timeRangeType: TimeRangeType? = null,
+    @Column(name = "time_range_value") var timeRangeValue: String? = null,
+    @Column(name = "time_range_unit") var timeRangeUnit: String? = null,
+    @Enumerated(EnumType.STRING) @Column(name = "time_qualifier") var timeQualifier: TimeQualifier? = null,
     @Column(name = "time_start") var timeStart: LocalDateTime? = null,
     @Column(name = "time_end") var timeEnd: LocalDateTime? = null,
-    @Column(name = "time_range_name") var timeRangeName: String? = null,
-    @Column(name = "time_range_unit") var timeRangeUnit: String? = null,
     @Column(name = "ordering", nullable = false) var ordering: Int = 0,
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
@@ -58,20 +62,47 @@ class CohortEntryConditionEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "cohort_entry_id", nullable = false) var cohortEntry: CohortEntryEntity,
     @Column(name = "ordering", nullable = false) var ordering: Int = 0,
-    @Enumerated(EnumType.STRING) @Column(name = "condition_type", nullable = false) var conditionType: ConditionType,
+    @Enumerated(EnumType.STRING) @Column(name = "condition_type", nullable = false) var conditionType: ComparisonOperator,
     @Column(name = "field", nullable = false) var field: String,
     @Column(name = "value", nullable = false) var value: String,
 )
 
-enum class EntryCondition {
-    NOT, DID
+enum class EntryConditionType {
+    PERFORMED,
+    NOT_PERFORMED,
+    IN_COHORT,
 }
 
-enum class EntryOperator {
-    AND
+enum class LogicalOperator {
+    AND,
+    OR,
 }
 
-enum class ConditionType(@get:JsonValue val displayName: String) {
-    NOT_LIKE("NOT LIKE"),
-    WITH("WITH"),
+enum class ComparisonOperator {
+    EQUALS,
+    NOT_EQUALS,
+    CONTAINS,
+    NOT_CONTAINS,
+    LESS_THAN,
+    LESS_THAN_OR_EQUAL,
+    GREATER_THAN,
+    GREATER_THAN_OR_EQUAL,
+    IN_SET,
+    NOT_IN_SET,
+}
+
+enum class TimeScope {
+    ANY_TIME,
+    DURING,
+    SINCE,
+}
+
+enum class TimeRangeType {
+    LAST,
+    BETWEEN,
+}
+
+enum class TimeQualifier {
+    ANY_TIME,
+    MOST_RECENT,
 }

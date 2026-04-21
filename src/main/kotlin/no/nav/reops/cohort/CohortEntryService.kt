@@ -25,10 +25,14 @@ class CohortEntryService(
             cohort = cohort,
             condition = request.condition,
             operator = request.operator,
+            referencedCohortId = request.referencedCohortId,
+            timeScope = request.timeScope,
+            timeRangeType = request.timeRangeType,
+            timeRangeValue = request.timeRangeValue,
+            timeRangeUnit = request.timeRangeUnit,
+            timeQualifier = request.timeQualifier,
             timeStart = request.timeStart,
             timeEnd = request.timeEnd,
-            timeRangeName = request.timeRangeName,
-            timeRangeUnit = request.timeRangeUnit,
             ordering = maxOrdering + 1,
         )
 
@@ -55,10 +59,14 @@ class CohortEntryService(
 
         entry.condition = request.condition
         entry.operator = request.operator
+        entry.referencedCohortId = request.referencedCohortId
+        entry.timeScope = request.timeScope
+        entry.timeRangeType = request.timeRangeType
+        entry.timeRangeValue = request.timeRangeValue
+        entry.timeRangeUnit = request.timeRangeUnit
+        entry.timeQualifier = request.timeQualifier
         entry.timeStart = request.timeStart
         entry.timeEnd = request.timeEnd
-        entry.timeRangeName = request.timeRangeName
-        entry.timeRangeUnit = request.timeRangeUnit
 
         entry.conditions.clear()
         request.conditions.forEachIndexed { index, condReq ->
@@ -114,10 +122,14 @@ class CohortEntryService(
         condition = condition,
         ordering = ordering,
         operator = operator,
+        referencedCohortId = referencedCohortId,
+        timeScope = timeScope,
+        timeRangeType = timeRangeType,
+        timeRangeValue = timeRangeValue,
+        timeRangeUnit = timeRangeUnit,
+        timeQualifier = timeQualifier,
         timeStart = timeStart,
         timeEnd = timeEnd,
-        timeRangeName = timeRangeName,
-        timeRangeUnit = timeRangeUnit,
         updatedAt = updatedAt,
         conditions = conditions.sortedBy { it.ordering }.map { it.toConditionDto() },
     )

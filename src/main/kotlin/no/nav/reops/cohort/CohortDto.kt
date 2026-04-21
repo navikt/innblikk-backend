@@ -29,13 +29,17 @@ data class CohortDetailDto(
 data class CohortEntryDto(
     val id: Long,
     val cohortId: Long,
-    val condition: EntryCondition,
+    val condition: EntryConditionType,
     val ordering: Int,
-    val operator: EntryOperator?,
+    val operator: LogicalOperator?,
+    val referencedCohortId: Long?,
+    val timeScope: TimeScope?,
+    val timeRangeType: TimeRangeType?,
+    val timeRangeValue: String?,
+    val timeRangeUnit: String?,
+    val timeQualifier: TimeQualifier?,
     val timeStart: LocalDateTime?,
     val timeEnd: LocalDateTime?,
-    val timeRangeName: String?,
-    val timeRangeUnit: String?,
     val updatedAt: LocalDateTime,
     val conditions: List<CohortEntryConditionDto>,
 )
@@ -43,7 +47,7 @@ data class CohortEntryDto(
 data class CohortEntryConditionDto(
     val id: Long,
     val ordering: Int,
-    val conditionType: ConditionType,
+    val conditionType: ComparisonOperator,
     val field: String,
     val value: String,
 )
@@ -61,28 +65,36 @@ data class UpdateCohortRequest(
 )
 
 data class CreateCohortEntryRequest(
-    val condition: EntryCondition,
-    val operator: EntryOperator? = null,
+    val condition: EntryConditionType,
+    val operator: LogicalOperator? = null,
+    val referencedCohortId: Long? = null,
+    val timeScope: TimeScope? = null,
+    val timeRangeType: TimeRangeType? = null,
+    val timeRangeValue: String? = null,
+    val timeRangeUnit: String? = null,
+    val timeQualifier: TimeQualifier? = null,
     val timeStart: LocalDateTime? = null,
     val timeEnd: LocalDateTime? = null,
-    val timeRangeName: String? = null,
-    val timeRangeUnit: String? = null,
     val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
 )
 
 data class CreateCohortEntryConditionRequest(
-    val conditionType: ConditionType,
+    val conditionType: ComparisonOperator,
     val field: String,
     val value: String,
 )
 
 data class UpdateCohortEntryRequest(
-    val condition: EntryCondition,
-    val operator: EntryOperator? = null,
+    val condition: EntryConditionType,
+    val operator: LogicalOperator? = null,
+    val referencedCohortId: Long? = null,
+    val timeScope: TimeScope? = null,
+    val timeRangeType: TimeRangeType? = null,
+    val timeRangeValue: String? = null,
+    val timeRangeUnit: String? = null,
+    val timeQualifier: TimeQualifier? = null,
     val timeStart: LocalDateTime? = null,
     val timeEnd: LocalDateTime? = null,
-    val timeRangeName: String? = null,
-    val timeRangeUnit: String? = null,
     val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
 )
 
