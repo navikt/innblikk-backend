@@ -61,4 +61,5 @@ logging:
     root: WARN
     org.springframework.web: WARN
     no.nav.reops: INFO
+    org.flywaydb: INFO
 
