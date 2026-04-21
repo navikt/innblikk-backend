@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query
 
 interface UserSettingValueRepository : JpaRepository<UserSettingValueEntity, Long> {
 
+    fun findAllByNavIdent(navIdent: String): List<UserSettingValueEntity>
+
     @Modifying
     @Query(
         value = """

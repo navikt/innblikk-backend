@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.put
 
 @WebMvcTest(
@@ -46,6 +47,28 @@ class UserSettingsControllerTest(
           "settings": {"beta_opt_in": "true", "grafbygger_always_show_sql": "false"}
         }
     """.trimIndent()
+
+    @Test
+    fun `GET returns 200 with settings map`() {
+        val response = GetUserSettingsResponse(settings = mapOf("beta_opt_in" to "true"))
+        whenever(authenticatedUserProvider.getCurrentUser())
+            .thenReturn(AuthenticatedUser(email = "test@nav.no", name = "Test User", navIdent = "Z123456"))
+        whenever(userSettingsService.getSettings("Z123456")).thenReturn(response)
+
+        val result = mockMvc.get(basePath).andReturn()
+
+        assertThat(result.response.status).isEqualTo(200)
+        assertThat(result.response.contentAsString).contains("\"beta_opt_in\":\"true\"")
+    }
+
+    @Test
+    fun `GET returns 401 when user is not authenticated`() {
+        whenever(authenticatedUserProvider.getCurrentUser()).thenReturn(null)
+
+        val result = mockMvc.get(basePath).andReturn()
+
+        assertThat(result.response.status).isEqualTo(401)
+    }
 
     @Test
     fun `PUT returns 200 with response body on success`() {

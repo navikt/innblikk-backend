@@ -8,3 +8,7 @@ data class UpsertUserSettingsResponse(
     val navIdent: String,
     val settingsCount: Int,
 )
+
+data class GetUserSettingsResponse(
+    val settings: Map<String, String>,
+)

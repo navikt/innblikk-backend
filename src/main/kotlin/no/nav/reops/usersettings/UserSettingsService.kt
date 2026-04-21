@@ -8,6 +8,11 @@ class UserSettingsService(
     private val userSettingsRepository: UserSettingsRepository,
     private val userSettingValueRepository: UserSettingValueRepository,
 ) {
+    fun getSettings(navIdent: String): GetUserSettingsResponse {
+        val values = userSettingValueRepository.findAllByNavIdent(navIdent)
+        return GetUserSettingsResponse(settings = values.associate { it.settingKey to it.value })
+    }
+
     @Transactional
     fun upsertSettings(
         navIdent: String,
