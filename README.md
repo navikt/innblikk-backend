@@ -1,42 +1,71 @@
 # Getting Started
 
 ### Prerequisites
-- Java version 25
+
+- Java 25
 
 ### Build the project
-```
+
+```bash
 ./gradlew build
 ./gradlew test --rerun-tasks
 ```
 
 ### Run locally
-1. Start docker-compose in project reops-event-proxy under .compose `docker-compose up`
-2. Start application with profile `local`:  
-   `./gradlew bootRun -Dspring-boot.run.profiles=local`
-3. Gå til swagger-doc `http://localhost:8086/api/swagger-ui/index.html#/`
-4. Optional, Bruno collection https://github.com/navikt/reops-meta/tree/main/tooling/researchops-bruno/start-umami-backend
 
-### Request token from the mock server
+**1. Start the database**
+
+```bash
+docker compose up
 ```
+
+> If Flyway migrations fail (e.g. after a schema change on the feature branch), wipe the volume and restart:
+>
+> ```bash
+> docker compose down -v && docker compose up
+> ```
+
+**2. Start the application**
+
+```bash
+./gradlew bootRun -Dspring-boot.run.profiles=local
+```
+
+Flyway runs automatically on startup and applies any pending migrations.
+
+**3. Verify**
+
+- Swagger UI: http://localhost:8086/api/swagger-ui/index.html
+- Optional: [Bruno collection](https://github.com/navikt/reops-meta/tree/main/tooling/researchops-bruno/start-umami-backend)
+
+### Request a token from the mock OAuth server
+
+```bash
 curl -s -X POST "http://localhost:8080/issueissue/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d 'grant_type=client_credentials&client_id=start-umami&client_secret=unused&audience=start-umami' \
   -d 'claims={"preferred_username":"test@nav.no","name":"Test User","NAVident":"T123456"}' \
   | jq -r .access_token
 ```
-#### Bruk jwt token i header
+
+Use the token in subsequent requests:
+
 ```
-Authorization: Bearer token
+Authorization: Bearer <token>
 ```
 
-### Testing CHANGELOG using conventional commits (eventually automate this in CI/CD pipeline)
-Install first git-cliff
+### Testing CHANGELOG using conventional commits
+
+Install git-cliff:
+
+```bash
+brew install git-cliff
 ```
-brew install git-cliff 
-```
-Then run the following command in the project root:
-```
+
+Then generate the changelog:
+
+```bash
 ./gradlew generateChangelog
 ```
-Generates a CHANGELOG.md file based on the commit history and the conventional commit messages.
-Configure "cliff.toml"
+
+Produces `CHANGELOG.md` from conventional commit history. Configure via `cliff.toml`.
