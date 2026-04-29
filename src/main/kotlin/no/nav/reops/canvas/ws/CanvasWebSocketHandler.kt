@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import no.nav.reops.security.AuthenticatedUser
 import org.slf4j.LoggerFactory
-import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
@@ -26,7 +25,6 @@ data class AuthenticatedWsUser(
 
 @Component
 class CanvasWebSocketHandler(
-    private val jwtDecoder: JwtDecoder,
     private val pgNotifyBridge: CanvasPgNotifyBridge,
     private val canvasDataService: CanvasDataService,
 ) : TextWebSocketHandler() {
@@ -128,18 +126,23 @@ class CanvasWebSocketHandler(
     // ── Auth ────────────────────────────────────────────────────────────────
 
     private fun handleAuth(session: WebSocketSession, msg: Map<String, Any?>) {
-        val token = msg["token"] as? String
-        if (token.isNullOrBlank()) {
-            sendJson(session, mapOf("type" to "error", "message" to "Missing 'token' in auth message"))
+        val ticket = msg["ticket"] as? String
+        if (ticket.isNullOrBlank()) {
+            sendJson(session, mapOf("type" to "error", "message" to "Missing 'ticket' in auth message"))
             return
         }
 
         try {
-            val jwt = jwtDecoder.decode(token)
+            val ticketUser = canvasDataService.redeemWsTicket(ticket)
+            if (ticketUser == null) {
+                log.warn("WS auth failed for {}: invalid or expired ticket", session.id)
+                sendJson(session, mapOf("type" to "error", "message" to "Invalid or expired ticket"))
+                return
+            }
             val user = AuthenticatedWsUser(
-                navIdent = jwt.claims["NAVident"] as? String,
-                name = jwt.claims["name"] as? String,
-                email = jwt.claims["preferred_username"] as? String,
+                navIdent = ticketUser.userId,
+                name = ticketUser.userName,
+                email = null,
             )
             sessionUser[session.id] = user
             sendJson(session, mapOf("type" to "auth:ok"))

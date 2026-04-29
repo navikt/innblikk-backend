@@ -13,17 +13,12 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.atLeast
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import java.time.Instant
 
 @ExtendWith(MockitoExtension::class)
 class CanvasWebSocketHandlerTest {
-
-    @Mock
-    private lateinit var jwtDecoder: JwtDecoder
 
     @Mock
     private lateinit var pgNotifyBridge: CanvasPgNotifyBridge
@@ -39,7 +34,7 @@ class CanvasWebSocketHandlerTest {
 
     @BeforeEach
     fun setUp() {
-        handler = CanvasWebSocketHandler(jwtDecoder, pgNotifyBridge, canvasDataService)
+        handler = CanvasWebSocketHandler(pgNotifyBridge, canvasDataService)
         handler.init()
         whenever(session.id).thenReturn("test-session-1")
         whenever(session.isOpen).thenReturn(true)
@@ -65,17 +60,10 @@ class CanvasWebSocketHandlerTest {
     }
 
     private fun authenticateSession() {
-        val jwt = Jwt.withTokenValue("token")
-            .header("alg", "none")
-            .claim("NAVident", "T123456")
-            .claim("name", "Test User")
-            .claim("preferred_username", "test@nav.no")
-            .issuedAt(Instant.now())
-            .expiresAt(Instant.now().plusSeconds(3600))
-            .build()
-        whenever(jwtDecoder.decode("valid-token")).thenReturn(jwt)
+        whenever(canvasDataService.redeemWsTicket("valid-ticket"))
+            .thenReturn(CanvasDataService.WsTicketUser("T123456", "Test User"))
 
-        sendMessage(mapOf("type" to "auth", "token" to "valid-token"))
+        sendMessage(mapOf("type" to "auth", "ticket" to "valid-ticket"))
     }
 
     // ── Auth ────────────────────────────────────────────────────────────────
@@ -92,23 +80,34 @@ class CanvasWebSocketHandlerTest {
         }
 
         @Test
-        fun `auth with invalid token sends error`() {
-            whenever(jwtDecoder.decode("bad-token")).thenThrow(RuntimeException("Invalid"))
+        fun `auth with invalid ticket sends error`() {
+            whenever(canvasDataService.redeemWsTicket("bad-ticket")).thenReturn(null)
 
-            sendMessage(mapOf("type" to "auth", "token" to "bad-token"))
+            sendMessage(mapOf("type" to "auth", "ticket" to "bad-ticket"))
 
             val response = captureLastSentMessage()
             assertThat(response["type"]).isEqualTo("error")
-            assertThat(response["message"] as String).contains("Authentication failed")
+            assertThat(response["message"] as String).contains("Invalid or expired ticket")
         }
 
         @Test
-        fun `auth with missing token sends error`() {
+        fun `auth with missing ticket sends error`() {
             sendMessage(mapOf("type" to "auth"))
 
             val response = captureLastSentMessage()
             assertThat(response["type"]).isEqualTo("error")
-            assertThat(response["message"] as String).contains("token")
+            assertThat(response["message"] as String).contains("ticket")
+        }
+
+        @Test
+        fun `auth with expired ticket sends error`() {
+            whenever(canvasDataService.redeemWsTicket("expired-ticket")).thenReturn(null)
+
+            sendMessage(mapOf("type" to "auth", "ticket" to "expired-ticket"))
+
+            val response = captureLastSentMessage()
+            assertThat(response["type"]).isEqualTo("error")
+            assertThat(response["message"] as String).contains("Invalid or expired ticket")
         }
     }
 
@@ -294,15 +293,10 @@ class CanvasWebSocketHandlerTest {
             whenever(freshSession.isOpen).thenReturn(true)
 
             // Authenticate the fresh session
-            val jwt = Jwt.withTokenValue("t2")
-                .header("alg", "none")
-                .claim("NAVident", "X999")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(3600))
-                .build()
-            whenever(jwtDecoder.decode("t2")).thenReturn(jwt)
+            whenever(canvasDataService.redeemWsTicket("fresh-ticket"))
+                .thenReturn(CanvasDataService.WsTicketUser("X999", "Fresh User"))
             handler.afterConnectionEstablished(freshSession)
-            handler.handleMessage(freshSession, TextMessage(objectMapper.writeValueAsString(mapOf("type" to "auth", "token" to "t2"))))
+            handler.handleMessage(freshSession, TextMessage(objectMapper.writeValueAsString(mapOf("type" to "auth", "ticket" to "fresh-ticket"))))
 
             handler.handleMessage(freshSession, TextMessage(objectMapper.writeValueAsString(mapOf(
                 "type" to "save", "graphId" to 10, "sqlText" to "x",

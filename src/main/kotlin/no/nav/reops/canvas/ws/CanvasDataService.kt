@@ -560,4 +560,55 @@ class CanvasDataService(
         "name" to name,
         "ordering" to ordering,
     )
+
+    // ── WS Tickets ────────────────────────────────────────────────────────
+
+    data class WsTicketUser(val userId: String, val userName: String)
+
+    private val ticketTtlSeconds = 30L
+
+    fun createWsTicket(userId: String, userName: String): String {
+        val ticketId = java.util.UUID.randomUUID().toString()
+        dataSource.connection.use { conn ->
+            val sql = """
+                INSERT INTO canvas_ws_tickets (id, user_id, user_name, expires_at)
+                VALUES (?::uuid, ?, ?, NOW() + INTERVAL '$ticketTtlSeconds seconds')
+            """.trimIndent()
+            conn.prepareStatement(sql).use { ps ->
+                ps.setString(1, ticketId)
+                ps.setString(2, userId)
+                ps.setString(3, userName)
+                ps.executeUpdate()
+            }
+        }
+        return ticketId
+    }
+
+    fun redeemWsTicket(ticketId: String): WsTicketUser? {
+        dataSource.connection.use { conn ->
+            val sql = """
+                DELETE FROM canvas_ws_tickets
+                WHERE id = ?::uuid AND expires_at > NOW()
+                RETURNING user_id, user_name
+            """.trimIndent()
+            conn.prepareStatement(sql).use { ps ->
+                ps.setString(1, ticketId)
+                ps.executeQuery().use { rs ->
+                    return if (rs.next()) {
+                        WsTicketUser(rs.getString("user_id"), rs.getString("user_name"))
+                    } else {
+                        null
+                    }
+                }
+            }
+        }
+    }
+
+    fun cleanupExpiredTickets() {
+        dataSource.connection.use { conn ->
+            conn.prepareStatement("DELETE FROM canvas_ws_tickets WHERE expires_at < NOW()").use { ps ->
+                ps.executeUpdate()
+            }
+        }
+    }
 }
