@@ -43,7 +43,7 @@ class QueryControllerTest(
 
     @Test
     fun `POST creates query and returns 201`() {
-        val dto = QueryDto(id = 10L, graphId = 4L, name = "query", sqlText = "select 1", ordering = 0, updatedAt = updatedAt)
+        val dto = QueryDto(id = 10L, graphId = 4L, name = "query", sqlText = "select 1", ordering = 0, version = 0, updatedAt = updatedAt)
         whenever(queryService.createQuery(eq(4L), any())).thenReturn(dto)
 
         val result = mockMvc.post(basePath) {
@@ -104,8 +104,8 @@ class QueryControllerTest(
     @Test
     fun `GET returns all queries with 200`() {
         val queries = listOf(
-            QueryDto(id = 10L, graphId = 4L, name = "first", sqlText = "select 1", ordering = 0, updatedAt = updatedAt),
-            QueryDto(id = 11L, graphId = 4L, name = "second", sqlText = "select 2", ordering = 1, updatedAt = updatedAt),
+            QueryDto(id = 10L, graphId = 4L, name = "first", sqlText = "select 1", ordering = 0, version = 0, updatedAt = updatedAt),
+            QueryDto(id = 11L, graphId = 4L, name = "second", sqlText = "select 2", ordering = 1, version = 0, updatedAt = updatedAt),
         )
         whenever(queryService.getAllQuery(4L)).thenReturn(queries)
 
@@ -133,7 +133,7 @@ class QueryControllerTest(
 
     @Test
     fun `GET by id returns query with 200`() {
-        val dto = QueryDto(id = 10L, graphId = 4L, name = "query", sqlText = "select 1", ordering = 0, updatedAt = updatedAt)
+        val dto = QueryDto(id = 10L, graphId = 4L, name = "query", sqlText = "select 1", ordering = 0, version = 0, updatedAt = updatedAt)
         whenever(queryService.getQueryById(4L, 10L)).thenReturn(dto)
 
         val result = mockMvc.get("$basePath/10") {
@@ -157,7 +157,7 @@ class QueryControllerTest(
 
     @Test
     fun `PUT updates query and returns 200`() {
-        val dto = QueryDto(id = 10L, graphId = 4L, name = "updated", sqlText = "select 2", ordering = 0, updatedAt = updatedAt)
+        val dto = QueryDto(id = 10L, graphId = 4L, name = "updated", sqlText = "select 2", ordering = 0, version = 0, updatedAt = updatedAt)
         whenever(queryService.updateQuery(eq(4L), eq(10L), any())).thenReturn(dto)
 
         val result = mockMvc.put("$basePath/10") {
@@ -216,8 +216,8 @@ class QueryControllerTest(
 
     @Test
     fun `POST ordering updates ordering and returns 200`() {
-        val result1 = QueryDto(id = 10L, graphId = 4L, name = "a", sqlText = "select 1", ordering = 1, updatedAt = updatedAt)
-        val result2 = QueryDto(id = 11L, graphId = 4L, name = "b", sqlText = "select 2", ordering = 0, updatedAt = updatedAt)
+        val result1 = QueryDto(id = 10L, graphId = 4L, name = "a", sqlText = "select 1", ordering = 1, version = 0, updatedAt = updatedAt)
+        val result2 = QueryDto(id = 11L, graphId = 4L, name = "b", sqlText = "select 2", ordering = 0, version = 0, updatedAt = updatedAt)
         whenever(queryService.updateOrdering(eq(4L), any())).thenReturn(listOf(result2, result1))
 
         val result = mockMvc.post("$basePath/ordering") {

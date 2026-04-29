@@ -10,7 +10,7 @@ spring:
     url: jdbc:postgresql://localhost:14332/start-umami?user=start-umami&password=start-umami
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: 25
       minimum-idle: 2
   flyway:
     enabled: true

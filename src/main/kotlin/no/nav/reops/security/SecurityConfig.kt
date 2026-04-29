@@ -15,6 +15,7 @@ class SecurityConfig {
             auth.requestMatchers("/api/swagger-ui/**").permitAll()
                 .requestMatchers("/api/openapi/**").permitAll()
                 .requestMatchers("/internal/**").permitAll()
+                .requestMatchers("/api/canvas/ws").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
         }.oauth2ResourceServer { rs ->

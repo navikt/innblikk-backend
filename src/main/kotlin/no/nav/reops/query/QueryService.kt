@@ -54,8 +54,15 @@ class QueryService(
             throw IllegalArgumentException("Graph with name '${request.name}' already exists in graph $graphId")
         }
 
+        if (request.version != null && entity.version != request.version) {
+            throw OptimisticLockConflictException(
+                "Version conflict for query $id: expected ${request.version}, actual ${entity.version}"
+            )
+        }
+
         entity.name = request.name
         entity.sqlText = request.sqlText
+        entity.version = entity.version + 1
 
         val updated = queryRepository.save(entity)
         changeService.createChange(requireNotNull(updated.id), EntityType.QUERY, ChangeType.UPDATED)
@@ -117,6 +124,7 @@ class QueryService(
             name = name,
             sqlText = sqlText,
             ordering = ordering,
+            version = version,
             updatedAt = updatedAt,
             changedByEmail = latestChange?.changedByEmail,
             changedByName = latestChange?.changedByName,

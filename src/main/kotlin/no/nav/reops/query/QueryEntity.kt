@@ -33,5 +33,7 @@ class QueryEntity(
 
     @Column(name = "ordering", nullable = false) var ordering: Int = 0,
 
+    @Column(name = "version", nullable = false) var version: Long = 0,
+
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

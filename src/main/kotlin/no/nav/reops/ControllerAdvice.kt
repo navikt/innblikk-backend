@@ -1,6 +1,7 @@
 package no.nav.reops
 
 import jakarta.servlet.http.HttpServletRequest
+import no.nav.reops.query.OptimisticLockConflictException
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
@@ -93,6 +94,23 @@ class ControlAdvice {
             errorId = errorId,
         )
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body)
+    }
+
+    @ExceptionHandler(OptimisticLockConflictException::class)
+    fun handleOptimisticLock(
+        ex: OptimisticLockConflictException,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorId = newErrorId()
+        LOG.info("Optimistic lock conflict ({}) {} {}: {}", errorId, request.method, request.requestURI, ex.message)
+
+        val body = ErrorResponse(
+            error = "VERSION_CONFLICT",
+            message = ex.message ?: "Version conflict",
+            status = HttpStatus.CONFLICT.value(),
+            errorId = errorId,
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body)
     }
 
     @ExceptionHandler(DataIntegrityViolationException::class)

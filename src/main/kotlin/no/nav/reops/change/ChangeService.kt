@@ -1,5 +1,6 @@
 package no.nav.reops.change
 
+import no.nav.reops.security.AuthenticatedUser
 import no.nav.reops.security.AuthenticatedUserProvider
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,6 +14,15 @@ class ChangeService(
     @Transactional
     fun createChange(entityId: Long, entityType: EntityType, changeType: ChangeType): ChangeDto {
         val user = authenticatedUserProvider.getCurrentUser()
+        return createChangeInternal(entityId, entityType, changeType, user)
+    }
+
+    @Transactional
+    fun createChange(entityId: Long, entityType: EntityType, changeType: ChangeType, user: AuthenticatedUser?): ChangeDto {
+        return createChangeInternal(entityId, entityType, changeType, user)
+    }
+
+    private fun createChangeInternal(entityId: Long, entityType: EntityType, changeType: ChangeType, user: AuthenticatedUser?): ChangeDto {
         val entity = ChangeEntity(
             entityId = entityId,
             entityType = entityType,

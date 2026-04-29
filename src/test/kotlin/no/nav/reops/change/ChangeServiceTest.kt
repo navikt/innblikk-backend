@@ -112,4 +112,61 @@ class ChangeServiceTest {
 
         assertThat(result).isNull()
     }
+
+    @Test
+    fun `createChange with explicit user uses provided user instead of SecurityContext`() {
+        val updatedAt = LocalDateTime.of(2025, 3, 4, 5, 6, 7)
+        val explicitUser = AuthenticatedUser(
+            email = "ws-user@nav.no",
+            name = "WS User",
+            navIdent = "W654321",
+        )
+
+        val savedEntity = ChangeEntity(
+            id = 3L,
+            entityType = EntityType.QUERY,
+            entityId = 30L,
+            changeType = ChangeType.UPDATED,
+            updatedAt = updatedAt,
+            changedByEmail = "ws-user@nav.no",
+            changedByName = "WS User",
+            changedByNavIdent = "W654321",
+        )
+
+        whenever(changeRepository.save(any<ChangeEntity>())).thenReturn(savedEntity)
+
+        val result = changeService.createChange(30L, EntityType.QUERY, ChangeType.UPDATED, explicitUser)
+
+        val captor = argumentCaptor<ChangeEntity>()
+        verify(changeRepository).save(captor.capture())
+        assertThat(captor.firstValue.changedByEmail).isEqualTo("ws-user@nav.no")
+        assertThat(captor.firstValue.changedByName).isEqualTo("WS User")
+        assertThat(captor.firstValue.changedByNavIdent).isEqualTo("W654321")
+
+        assertThat(result.changedByEmail).isEqualTo("ws-user@nav.no")
+        assertThat(result.changedByName).isEqualTo("WS User")
+        assertThat(result.changedByNavIdent).isEqualTo("W654321")
+    }
+
+    @Test
+    fun `createChange with null explicit user records empty fields`() {
+        val updatedAt = LocalDateTime.of(2025, 4, 5, 6, 7, 8)
+        val savedEntity = ChangeEntity(
+            id = 4L,
+            entityType = EntityType.GRAPH,
+            entityId = 40L,
+            changeType = ChangeType.CREATED,
+            updatedAt = updatedAt,
+        )
+
+        whenever(changeRepository.save(any<ChangeEntity>())).thenReturn(savedEntity)
+
+        changeService.createChange(40L, EntityType.GRAPH, ChangeType.CREATED, null)
+
+        val captor = argumentCaptor<ChangeEntity>()
+        verify(changeRepository).save(captor.capture())
+        assertThat(captor.firstValue.changedByEmail).isEmpty()
+        assertThat(captor.firstValue.changedByName).isEmpty()
+        assertThat(captor.firstValue.changedByNavIdent).isEmpty()
+    }
 }
