@@ -8,6 +8,7 @@ data class QueryDto(
     val name: String,
     val sqlText: String,
     val ordering: Int,
+    val version: Long,
     val updatedAt: LocalDateTime,
     val changedByEmail: String? = null,
     val changedByName: String? = null,
@@ -22,6 +23,7 @@ data class CreateQueryRequest(
 data class UpdateQueryRequest(
     val name: String,
     val sqlText: String,
+    val version: Long? = null,
 )
 
 data class QueryOrderingEntry(
