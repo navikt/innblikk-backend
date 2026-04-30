@@ -5,6 +5,7 @@ import no.nav.reops.security.AuthenticatedUserProvider
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -32,5 +33,13 @@ class UserSettingsController(
             ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val result = userSettingsService.upsertSettings(navIdent, request)
         return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/touch")
+    fun touchUserSettings(): ResponseEntity<Void> {
+        val navIdent = authenticatedUserProvider.getCurrentUser()?.navIdent
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        userSettingsService.touchUser(navIdent)
+        return ResponseEntity.noContent().build()
     }
 }

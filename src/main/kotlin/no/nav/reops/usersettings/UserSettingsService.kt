@@ -14,6 +14,11 @@ class UserSettingsService(
     }
 
     @Transactional
+    fun touchUser(navIdent: String) {
+        userSettingsRepository.upsertUser(navIdent)
+    }
+
+    @Transactional
     fun upsertSettings(
         navIdent: String,
         request: UpsertUserSettingsRequest,
