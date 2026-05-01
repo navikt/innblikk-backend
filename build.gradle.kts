@@ -1,11 +1,11 @@
 plugins {
-	id("org.springframework.boot") version "4.0.3"
+	id("org.springframework.boot") version "4.0.6"
 	id("io.spring.dependency-management") version "1.1.7"
-	id("org.graalvm.buildtools.native") version "0.11.5"
-	id("org.hibernate.orm") version "7.2.4.Final"
-	kotlin("jvm") version "2.3.10"
-	kotlin("plugin.spring") version "2.3.10"
-	kotlin("plugin.jpa") version "2.3.10"
+	id("org.graalvm.buildtools.native") version "1.1.0"
+	id("org.hibernate.orm") version "7.3.2.Final"
+	kotlin("jvm") version "2.3.21"
+	kotlin("plugin.spring") version "2.3.21"
+	kotlin("plugin.jpa") version "2.3.21"
 }
 
 group = "no.nav.reops"
@@ -36,7 +36,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
 	implementation("org.postgresql:postgresql")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
@@ -45,11 +45,11 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testImplementation("org.mockito.kotlin:mockito-kotlin:6.2.3")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:6.3.0")
 	testImplementation("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.assertj:assertj-core")
 	testImplementation("io.zonky.test:embedded-postgres:2.2.2")
-	testImplementation("io.zonky.test:embedded-database-spring-test:2.7.1")
+	testImplementation("io.zonky.test:embedded-database-spring-test:2.8.0")
 	testImplementation("org.postgresql:postgresql")
 	testImplementation("org.flywaydb.flyway-test-extensions:flyway-spring-test:10.0.0")
 }
