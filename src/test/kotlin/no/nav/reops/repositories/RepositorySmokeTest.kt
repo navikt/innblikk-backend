@@ -18,7 +18,6 @@ import no.nav.reops.cohort.CohortEntryEntity
 import no.nav.reops.cohort.CohortEntryRepository
 import no.nav.reops.cohort.CohortRepository
 import no.nav.reops.cohort.ComparisonOperator
-import no.nav.reops.cohort.EntryConditionType
 import org.assertj.core.api.Assertions.assertThat
 import org.flywaydb.test.annotation.FlywayTest
 import org.junit.jupiter.api.Test
@@ -184,7 +183,8 @@ class RepositorySmokeTest(
 
         val entry = CohortEntryEntity(
             cohort = cohort,
-            condition = EntryConditionType.NOT_PERFORMED,
+            negated = true,
+            inCohort = false,
             operator = null,
         )
         entry.conditions.add(
@@ -205,7 +205,7 @@ class RepositorySmokeTest(
 
         val loaded = cohortEntryRepository.findById(saved.id!!)
         assertThat(loaded).isPresent
-        assertThat(loaded.get().condition).isEqualTo(EntryConditionType.NOT_PERFORMED)
+        assertThat(loaded.get().negated).isTrue()
         assertThat(loaded.get().conditions).hasSize(1)
         assertThat(loaded.get().conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
         assertThat(loaded.get().conditions[0].field).isEqualTo("platform")

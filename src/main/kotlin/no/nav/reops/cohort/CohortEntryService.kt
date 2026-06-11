@@ -23,17 +23,17 @@ class CohortEntryService(
 
         val entry = CohortEntryEntity(
             cohort = cohort,
-            condition = request.condition,
+            negated = request.negated,
+            inCohort = request.inCohort,
             operator = request.operator,
             referencedCohortId = request.referencedCohortId,
-            timeScope = request.timeScope,
-            timeRangeType = request.timeRangeType,
-            timeRangeValue = request.timeRangeValue,
-            timeRangeUnit = request.timeRangeUnit,
-            timeQualifier = request.timeQualifier,
+            ordering = maxOrdering + 1,
+            // Time filtering — stored for future use, not yet applied in SQL generation
+            // TODO: implement time-scoped filtering in cohortSqlResolver when UI supports it
+            timeValue = request.timeValue,
+            timeUnit = request.timeUnit,
             timeStart = request.timeStart,
             timeEnd = request.timeEnd,
-            ordering = maxOrdering + 1,
         )
 
         request.conditions.forEachIndexed { index, condReq ->
@@ -54,17 +54,15 @@ class CohortEntryService(
     }
 
     @Transactional
-    fun updateEntry(cohortId: Long, id: Long, request: UpdateCohortEntryRequest): CohortEntryDto? {
+    fun updateEntry(cohortId: Long, id: Long, request: CreateCohortEntryRequest): CohortEntryDto? {
         val entry = cohortEntryRepository.findByIdAndCohortId(id, cohortId) ?: return null
 
-        entry.condition = request.condition
+        entry.negated = request.negated
+        entry.inCohort = request.inCohort
         entry.operator = request.operator
         entry.referencedCohortId = request.referencedCohortId
-        entry.timeScope = request.timeScope
-        entry.timeRangeType = request.timeRangeType
-        entry.timeRangeValue = request.timeRangeValue
-        entry.timeRangeUnit = request.timeRangeUnit
-        entry.timeQualifier = request.timeQualifier
+        entry.timeValue = request.timeValue
+        entry.timeUnit = request.timeUnit
         entry.timeStart = request.timeStart
         entry.timeEnd = request.timeEnd
 
@@ -119,15 +117,13 @@ class CohortEntryService(
     private fun CohortEntryEntity.toDto(): CohortEntryDto = CohortEntryDto(
         id = requireNotNull(id),
         cohortId = requireNotNull(cohort.id),
-        condition = condition,
+        negated = negated,
+        inCohort = inCohort,
         ordering = ordering,
         operator = operator,
         referencedCohortId = referencedCohortId,
-        timeScope = timeScope,
-        timeRangeType = timeRangeType,
-        timeRangeValue = timeRangeValue,
-        timeRangeUnit = timeRangeUnit,
-        timeQualifier = timeQualifier,
+        timeValue = timeValue,
+        timeUnit = timeUnit,
         timeStart = timeStart,
         timeEnd = timeEnd,
         updatedAt = updatedAt,

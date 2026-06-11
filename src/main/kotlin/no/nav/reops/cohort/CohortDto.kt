@@ -29,17 +29,16 @@ data class CohortDetailDto(
 data class CohortEntryDto(
     val id: Long,
     val cohortId: Long,
-    val condition: EntryConditionType,
+    val negated: Boolean,
+    val inCohort: Boolean,
     val ordering: Int,
     val operator: LogicalOperator?,
     val referencedCohortId: Long?,
-    val timeScope: TimeScope?,
-    val timeRangeType: TimeRangeType?,
-    val timeRangeValue: String?,
-    val timeRangeUnit: String?,
-    val timeQualifier: TimeQualifier?,
-    val timeStart: LocalDateTime?,
-    val timeEnd: LocalDateTime?,
+    // Time filtering — present when set, null otherwise (not yet used in SQL generation)
+    val timeValue: Int? = null,
+    val timeUnit: String? = null,
+    val timeStart: LocalDateTime? = null,
+    val timeEnd: LocalDateTime? = null,
     val updatedAt: LocalDateTime,
     val conditions: List<CohortEntryConditionDto>,
 )
@@ -65,14 +64,13 @@ data class UpdateCohortRequest(
 )
 
 data class CreateCohortEntryRequest(
-    val condition: EntryConditionType,
+    val negated: Boolean = false,
+    val inCohort: Boolean = false,
     val operator: LogicalOperator? = null,
     val referencedCohortId: Long? = null,
-    val timeScope: TimeScope? = null,
-    val timeRangeType: TimeRangeType? = null,
-    val timeRangeValue: String? = null,
-    val timeRangeUnit: String? = null,
-    val timeQualifier: TimeQualifier? = null,
+    // Time filtering — optional, not yet used in SQL generation (TODO: implement in cohortSqlResolver)
+    val timeValue: Int? = null,
+    val timeUnit: String? = null,
     val timeStart: LocalDateTime? = null,
     val timeEnd: LocalDateTime? = null,
     val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
@@ -82,20 +80,6 @@ data class CreateCohortEntryConditionRequest(
     val conditionType: ComparisonOperator,
     val field: String,
     val value: String,
-)
-
-data class UpdateCohortEntryRequest(
-    val condition: EntryConditionType,
-    val operator: LogicalOperator? = null,
-    val referencedCohortId: Long? = null,
-    val timeScope: TimeScope? = null,
-    val timeRangeType: TimeRangeType? = null,
-    val timeRangeValue: String? = null,
-    val timeRangeUnit: String? = null,
-    val timeQualifier: TimeQualifier? = null,
-    val timeStart: LocalDateTime? = null,
-    val timeEnd: LocalDateTime? = null,
-    val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
 )
 
 data class CohortEntryOrderingEntry(

@@ -5,7 +5,7 @@ import org.springframework.data.repository.CrudRepository
 import java.util.UUID
 
 interface CohortRepository : CrudRepository<CohortEntity, Long> {
-    fun existsByName(name: String): Boolean
+    fun existsByNameAndWebsiteId(name: String, websiteId: UUID): Boolean
     fun findAllByWebsiteId(websiteId: UUID): List<CohortEntity>
 }
 

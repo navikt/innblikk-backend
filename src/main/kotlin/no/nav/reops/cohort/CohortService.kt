@@ -16,8 +16,8 @@ class CohortService(
 
     @Transactional
     fun createCohort(request: CreateCohortRequest): CohortDto {
-        if (cohortRepository.existsByName(request.name)) {
-            throw IllegalArgumentException("Cohort with name '${request.name}' already exists")
+        if (cohortRepository.existsByNameAndWebsiteId(request.name, request.websiteId)) {
+            throw IllegalArgumentException("Cohort with name '${request.name}' already exists for this website")
         }
 
         val entity = CohortEntity(
@@ -46,8 +46,8 @@ class CohortService(
     fun updateCohort(id: Long, request: UpdateCohortRequest): CohortDto? {
         val entity = cohortRepository.findById(id).getOrNull() ?: return null
 
-        if (entity.name != request.name && cohortRepository.existsByName(request.name)) {
-            throw IllegalArgumentException("Cohort with name '${request.name}' already exists")
+        if (entity.name != request.name && cohortRepository.existsByNameAndWebsiteId(request.name, request.websiteId)) {
+            throw IllegalArgumentException("Cohort with name '${request.name}' already exists for this website")
         }
 
         entity.name = request.name
@@ -100,15 +100,13 @@ class CohortService(
     private fun CohortEntryEntity.toEntryDto(): CohortEntryDto = CohortEntryDto(
         id = requireNotNull(id),
         cohortId = requireNotNull(cohort.id),
-        condition = condition,
+        negated = negated,
+        inCohort = inCohort,
         ordering = ordering,
         operator = operator,
         referencedCohortId = referencedCohortId,
-        timeScope = timeScope,
-        timeRangeType = timeRangeType,
-        timeRangeValue = timeRangeValue,
-        timeRangeUnit = timeRangeUnit,
-        timeQualifier = timeQualifier,
+        timeValue = timeValue,
+        timeUnit = timeUnit,
         timeStart = timeStart,
         timeEnd = timeEnd,
         updatedAt = updatedAt,

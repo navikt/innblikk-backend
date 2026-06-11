@@ -6,24 +6,25 @@ CREATE TABLE cohorts
     description TEXT,
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT uq_cohorts_name UNIQUE (name)
+    CONSTRAINT uq_cohorts_name_website UNIQUE (name, website_id)
 );
 
 CREATE TABLE cohort_entries
 (
     id                   BIGSERIAL PRIMARY KEY,
     cohort_id            BIGINT      NOT NULL,
-    condition            VARCHAR(32) NOT NULL,
+    negated              BOOLEAN     NOT NULL DEFAULT FALSE,
+    in_cohort            BOOLEAN     NOT NULL DEFAULT FALSE,
     operator             VARCHAR(32),
     referenced_cohort_id BIGINT,
-    time_scope           VARCHAR(32),
-    time_range_type      VARCHAR(32),
-    time_range_value     VARCHAR(64),
-    time_range_unit      VARCHAR(64),
-    time_qualifier       VARCHAR(32),
+    ordering             INT         NOT NULL DEFAULT 0,
+    -- Time filtering (not yet implemented in UI/SQL generation)
+    -- Relative window: "last N days/weeks" — populated when using relative time range
+    time_value           INT,
+    time_unit            VARCHAR(16),
+    -- Absolute window: "between date A and date B" — populated when using fixed date range
     time_start           TIMESTAMP,
     time_end             TIMESTAMP,
-    ordering             INT         NOT NULL DEFAULT 0,
     updated_at           TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_cohort_entries_cohort FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE CASCADE,

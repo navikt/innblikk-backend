@@ -48,9 +48,8 @@ class CohortEntryServiceTest {
         whenever(cohortEntryRepository.findMaxOrderingByCohortId(1L)).thenReturn(-1)
 
         val savedEntry = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.NOT_PERFORMED, ordering = 0,
-            updatedAt = updatedAt, timeStart = updatedAt, timeEnd = updatedAt.plusDays(1),
-            timeScope = TimeScope.DURING, timeRangeType = TimeRangeType.BETWEEN,
+            id = 10L, cohort = cohort, negated = true, inCohort = false,
+            ordering = 0, updatedAt = updatedAt,
         )
         savedEntry.conditions.add(
             CohortEntryConditionEntity(
@@ -61,11 +60,7 @@ class CohortEntryServiceTest {
         whenever(cohortEntryRepository.save(any<CohortEntryEntity>())).thenReturn(savedEntry)
 
         val result = cohortEntryService.createEntry(1L, CreateCohortEntryRequest(
-            condition = EntryConditionType.NOT_PERFORMED,
-            timeScope = TimeScope.DURING,
-            timeRangeType = TimeRangeType.BETWEEN,
-            timeStart = updatedAt,
-            timeEnd = updatedAt.plusDays(1),
+            negated = true,
             conditions = listOf(
                 CreateCohortEntryConditionRequest(
                     conditionType = ComparisonOperator.CONTAINS, field = "platform", value = "https://example.no"
@@ -75,7 +70,8 @@ class CohortEntryServiceTest {
 
         val captor = argumentCaptor<CohortEntryEntity>()
         verify(cohortEntryRepository).save(captor.capture())
-        assertThat(captor.firstValue.condition).isEqualTo(EntryConditionType.NOT_PERFORMED)
+        assertThat(captor.firstValue.negated).isTrue()
+        assertThat(captor.firstValue.inCohort).isFalse()
         assertThat(captor.firstValue.ordering).isEqualTo(0)
         assertThat(captor.firstValue.conditions).hasSize(1)
         assertThat(captor.firstValue.conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
@@ -83,7 +79,7 @@ class CohortEntryServiceTest {
         verify(changeService).createChange(10L, EntityType.COHORT_ENTRY, ChangeType.CREATED)
 
         assertThat(result.id).isEqualTo(10L)
-        assertThat(result.condition).isEqualTo(EntryConditionType.NOT_PERFORMED)
+        assertThat(result.negated).isTrue()
         assertThat(result.conditions).hasSize(1)
         assertThat(result.conditions[0].field).isEqualTo("platform")
     }
@@ -93,7 +89,7 @@ class CohortEntryServiceTest {
         whenever(cohortRepository.findById(99L)).thenReturn(Optional.empty())
 
         assertThatThrownBy {
-            cohortEntryService.createEntry(99L, CreateCohortEntryRequest(condition = EntryConditionType.NOT_PERFORMED))
+            cohortEntryService.createEntry(99L, CreateCohortEntryRequest())
         }.isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("99")
     }
 
@@ -104,14 +100,12 @@ class CohortEntryServiceTest {
         whenever(cohortEntryRepository.findMaxOrderingByCohortId(1L)).thenReturn(2)
 
         val savedEntry = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.PERFORMED,
+            id = 10L, cohort = cohort, negated = false, inCohort = false,
             operator = LogicalOperator.AND, ordering = 3, updatedAt = updatedAt,
         )
         whenever(cohortEntryRepository.save(any<CohortEntryEntity>())).thenReturn(savedEntry)
 
-        cohortEntryService.createEntry(1L, CreateCohortEntryRequest(
-            condition = EntryConditionType.PERFORMED, operator = LogicalOperator.AND
-        ))
+        cohortEntryService.createEntry(1L, CreateCohortEntryRequest(operator = LogicalOperator.AND))
 
         val captor = argumentCaptor<CohortEntryEntity>()
         verify(cohortEntryRepository).save(captor.capture())
@@ -119,40 +113,30 @@ class CohortEntryServiceTest {
     }
 
     @Test
-    fun `createEntry with time range fields`() {
+    fun `createEntry with inCohort sets referenced cohort`() {
         val cohort = CohortEntity(id = 1L, websiteId = websiteId, name = "Test", updatedAt = updatedAt)
         whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(cohort))
         whenever(cohortEntryRepository.findMaxOrderingByCohortId(1L)).thenReturn(-1)
 
         val savedEntry = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.PERFORMED,
-            operator = LogicalOperator.AND, ordering = 0, updatedAt = updatedAt,
-            timeScope = TimeScope.DURING, timeRangeType = TimeRangeType.LAST,
-            timeRangeValue = "7", timeRangeUnit = "days",
+            id = 10L, cohort = cohort, negated = false, inCohort = true,
+            referencedCohortId = 5L, ordering = 0, updatedAt = updatedAt,
         )
         whenever(cohortEntryRepository.save(any<CohortEntryEntity>())).thenReturn(savedEntry)
 
-        val result = cohortEntryService.createEntry(1L, CreateCohortEntryRequest(
-            condition = EntryConditionType.PERFORMED, operator = LogicalOperator.AND,
-            timeScope = TimeScope.DURING, timeRangeType = TimeRangeType.LAST,
-            timeRangeValue = "7", timeRangeUnit = "days",
-        ))
+        cohortEntryService.createEntry(1L, CreateCohortEntryRequest(inCohort = true, referencedCohortId = 5L))
 
         val captor = argumentCaptor<CohortEntryEntity>()
         verify(cohortEntryRepository).save(captor.capture())
-        assertThat(captor.firstValue.timeScope).isEqualTo(TimeScope.DURING)
-        assertThat(captor.firstValue.timeRangeType).isEqualTo(TimeRangeType.LAST)
-        assertThat(captor.firstValue.timeRangeValue).isEqualTo("7")
-        assertThat(captor.firstValue.timeRangeUnit).isEqualTo("days")
-        assertThat(captor.firstValue.timeStart).isNull()
-        assertThat(captor.firstValue.timeEnd).isNull()
+        assertThat(captor.firstValue.inCohort).isTrue()
+        assertThat(captor.firstValue.referencedCohortId).isEqualTo(5L)
     }
 
     @Test
     fun `updateEntry replaces conditions and returns dto`() {
         val cohort = CohortEntity(id = 1L, websiteId = websiteId, name = "Test", updatedAt = updatedAt)
         val entry = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.NOT_PERFORMED, ordering = 0, updatedAt = updatedAt,
+            id = 10L, cohort = cohort, negated = true, inCohort = false, ordering = 0, updatedAt = updatedAt,
         )
         entry.conditions.add(
             CohortEntryConditionEntity(
@@ -170,13 +154,9 @@ class CohortEntryServiceTest {
             saved
         }
 
-        val result = cohortEntryService.updateEntry(1L, 10L, UpdateCohortEntryRequest(
-            condition = EntryConditionType.PERFORMED,
+        val result = cohortEntryService.updateEntry(1L, 10L, CreateCohortEntryRequest(
+            negated = false,
             operator = LogicalOperator.AND,
-            timeScope = TimeScope.DURING,
-            timeRangeType = TimeRangeType.LAST,
-            timeRangeValue = "7",
-            timeRangeUnit = "days",
             conditions = listOf(
                 CreateCohortEntryConditionRequest(conditionType = ComparisonOperator.EQUALS, field = "count", value = "5")
             ),
@@ -184,10 +164,8 @@ class CohortEntryServiceTest {
 
         val captor = argumentCaptor<CohortEntryEntity>()
         verify(cohortEntryRepository).save(captor.capture())
-        assertThat(captor.firstValue.condition).isEqualTo(EntryConditionType.PERFORMED)
+        assertThat(captor.firstValue.negated).isFalse()
         assertThat(captor.firstValue.operator).isEqualTo(LogicalOperator.AND)
-        assertThat(captor.firstValue.timeScope).isEqualTo(TimeScope.DURING)
-        assertThat(captor.firstValue.timeRangeType).isEqualTo(TimeRangeType.LAST)
         assertThat(captor.firstValue.conditions).hasSize(1)
         assertThat(captor.firstValue.conditions[0].conditionType).isEqualTo(ComparisonOperator.EQUALS)
 
@@ -201,7 +179,7 @@ class CohortEntryServiceTest {
         whenever(cohortEntryRepository.findByIdAndCohortId(10L, 1L)).thenReturn(null)
 
         assertThat(
-            cohortEntryService.updateEntry(1L, 10L, UpdateCohortEntryRequest(condition = EntryConditionType.NOT_PERFORMED))
+            cohortEntryService.updateEntry(1L, 10L, CreateCohortEntryRequest(negated = true))
         ).isNull()
         verifyNoInteractions(changeService)
     }
@@ -210,10 +188,10 @@ class CohortEntryServiceTest {
     fun `updateOrdering reorders entries`() {
         val cohort = CohortEntity(id = 1L, websiteId = websiteId, name = "Test", updatedAt = updatedAt)
         val entry1 = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.NOT_PERFORMED, ordering = 0, updatedAt = updatedAt,
+            id = 10L, cohort = cohort, negated = true, inCohort = false, ordering = 0, updatedAt = updatedAt,
         )
         val entry2 = CohortEntryEntity(
-            id = 11L, cohort = cohort, condition = EntryConditionType.PERFORMED,
+            id = 11L, cohort = cohort, negated = false, inCohort = false,
             operator = LogicalOperator.AND, ordering = 1, updatedAt = updatedAt,
         )
 
@@ -255,7 +233,7 @@ class CohortEntryServiceTest {
     fun `deleteEntry deletes and records change`() {
         val cohort = CohortEntity(id = 1L, websiteId = websiteId, name = "Test", updatedAt = updatedAt)
         val entry = CohortEntryEntity(
-            id = 10L, cohort = cohort, condition = EntryConditionType.NOT_PERFORMED, ordering = 0, updatedAt = updatedAt,
+            id = 10L, cohort = cohort, negated = true, inCohort = false, ordering = 0, updatedAt = updatedAt,
         )
         whenever(cohortEntryRepository.findByIdAndCohortId(10L, 1L)).thenReturn(entry)
 

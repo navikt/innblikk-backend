@@ -23,7 +23,7 @@ class CohortEntryController(private val cohortEntryService: CohortEntryService) 
     fun updateEntry(
         @PathVariable cohortId: Long,
         @PathVariable id: Long,
-        @RequestBody request: UpdateCohortEntryRequest,
+        @RequestBody request: CreateCohortEntryRequest,
     ): ResponseEntity<CohortEntryDto> {
         val updated = cohortEntryService.updateEntry(cohortId, id, request)
         return if (updated != null) ResponseEntity.ok(updated) else ResponseEntity.notFound().build()

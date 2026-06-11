@@ -43,7 +43,7 @@ class CohortServiceTest {
     @Test
     fun `createCohort saves entity and returns dto`() {
         val saved = cohort(id = 1L, name = "Test cohort", description = "desc")
-        whenever(cohortRepository.existsByName("Test cohort")).thenReturn(false)
+        whenever(cohortRepository.existsByNameAndWebsiteId("Test cohort", websiteId)).thenReturn(false)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(saved)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(
             changeDto(1L, ChangeType.CREATED)
@@ -68,7 +68,7 @@ class CohortServiceTest {
 
     @Test
     fun `createCohort throws when name already exists`() {
-        whenever(cohortRepository.existsByName("Existing")).thenReturn(true)
+        whenever(cohortRepository.existsByNameAndWebsiteId("Existing", websiteId)).thenReturn(true)
 
         assertThatThrownBy {
             cohortService.createCohort(CreateCohortRequest(websiteId = websiteId, name = "Existing"))
@@ -125,7 +125,7 @@ class CohortServiceTest {
     @Test
     fun `getCohortById returns detail dto with entries and conditions`() {
         val entity = cohort(id = 1L, name = "Test")
-        val entry = cohortEntry(id = 10L, cohort = entity, condition = EntryConditionType.NOT_PERFORMED, ordering = 0)
+        val entry = cohortEntry(id = 10L, cohort = entity, negated = true, ordering = 0)
         entry.conditions.add(
             CohortEntryConditionEntity(
                 id = 100L, cohortEntry = entry, ordering = 1,
@@ -141,7 +141,7 @@ class CohortServiceTest {
         assertThat(result).isNotNull
         assertThat(result!!.id).isEqualTo(1L)
         assertThat(result.entries).hasSize(1)
-        assertThat(result.entries[0].condition).isEqualTo(EntryConditionType.NOT_PERFORMED)
+        assertThat(result.entries[0].negated).isTrue()
         assertThat(result.entries[0].conditions).hasSize(1)
         assertThat(result.entries[0].conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
         assertThat(result.entries[0].conditions[0].field).isEqualTo("platform")
@@ -150,8 +150,8 @@ class CohortServiceTest {
     @Test
     fun `getCohortById returns entries sorted by ordering`() {
         val entity = cohort(id = 1L, name = "Test")
-        entity.entries.add(cohortEntry(id = 11L, cohort = entity, condition = EntryConditionType.PERFORMED, ordering = 1))
-        entity.entries.add(cohortEntry(id = 10L, cohort = entity, condition = EntryConditionType.NOT_PERFORMED, ordering = 0))
+        entity.entries.add(cohortEntry(id = 11L, cohort = entity, negated = false, ordering = 1))
+        entity.entries.add(cohortEntry(id = 10L, cohort = entity, negated = true, ordering = 0))
         whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
@@ -172,7 +172,7 @@ class CohortServiceTest {
     fun `updateCohort saves changes and returns dto`() {
         val entity = cohort(id = 1L, name = "Old name")
         whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
-        whenever(cohortRepository.existsByName("New name")).thenReturn(false)
+        whenever(cohortRepository.existsByNameAndWebsiteId("New name", websiteId)).thenReturn(false)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
@@ -209,7 +209,7 @@ class CohortServiceTest {
     fun `updateCohort throws when new name already exists`() {
         val entity = cohort(id = 1L, name = "Old name")
         whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
-        whenever(cohortRepository.existsByName("Taken")).thenReturn(true)
+        whenever(cohortRepository.existsByNameAndWebsiteId("Taken", websiteId)).thenReturn(true)
 
         assertThatThrownBy {
             cohortService.updateCohort(1L, UpdateCohortRequest(name = "Taken", websiteId = websiteId))
@@ -254,11 +254,13 @@ class CohortServiceTest {
     private fun cohortEntry(
         id: Long,
         cohort: CohortEntity,
-        condition: EntryConditionType = EntryConditionType.NOT_PERFORMED,
+        negated: Boolean = false,
+        inCohort: Boolean = false,
         operator: LogicalOperator? = null,
         ordering: Int = 0,
     ) = CohortEntryEntity(
-        id = id, cohort = cohort, condition = condition, operator = operator, ordering = ordering, updatedAt = updatedAt,
+        id = id, cohort = cohort, negated = negated, inCohort = inCohort,
+        operator = operator, ordering = ordering, updatedAt = updatedAt,
     )
 
     private fun changeDto(entityId: Long, changeType: ChangeType) = ChangeDto(

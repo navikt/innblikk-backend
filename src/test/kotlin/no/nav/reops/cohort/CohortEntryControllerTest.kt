@@ -41,18 +41,14 @@ class CohortEntryControllerTest(
 
     @Test
     fun `POST creates entry and returns 201`() {
-        val dto = entryDto(id = 10L, condition = EntryConditionType.NOT_PERFORMED)
+        val dto = entryDto(id = 10L, negated = true)
         whenever(cohortEntryService.createEntry(eq(1L), any())).thenReturn(dto)
 
         val result = mockMvc.post("/api/cohort/1/entries") {
             contentType = MediaType.APPLICATION_JSON
             content = """
                 {
-                    "condition":"NOT_PERFORMED",
-                    "timeScope":"DURING",
-                    "timeRangeType":"BETWEEN",
-                    "timeStart":"2026-04-13T10:00:00",
-                    "timeEnd":"2026-04-14T10:00:00",
+                    "negated": true,
                     "conditions":[
                         {"conditionType":"CONTAINS","field":"platform","value":"https://example.no"}
                     ]
@@ -61,7 +57,7 @@ class CohortEntryControllerTest(
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(201)
-        assertThat(result.response.contentAsString).contains("\"condition\":\"NOT_PERFORMED\"")
+        assertThat(result.response.contentAsString).contains("\"negated\":true")
     }
 
     @Test
@@ -72,7 +68,7 @@ class CohortEntryControllerTest(
 
         val result = mockMvc.post("/api/cohort/99/entries") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"condition":"NOT_PERFORMED","conditions":[]}"""
+            content = """{"negated":false,"conditions":[]}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(400)
@@ -80,19 +76,15 @@ class CohortEntryControllerTest(
 
     @Test
     fun `PUT updates entry and returns 200`() {
-        val dto = entryDto(id = 10L, condition = EntryConditionType.PERFORMED)
+        val dto = entryDto(id = 10L, negated = false)
         whenever(cohortEntryService.updateEntry(eq(1L), eq(10L), any())).thenReturn(dto)
 
         val result = mockMvc.put("/api/cohort/1/entries/10") {
             contentType = MediaType.APPLICATION_JSON
             content = """
                 {
-                    "condition":"PERFORMED",
-                    "operator":"AND",
-                    "timeScope":"DURING",
-                    "timeRangeType":"LAST",
-                    "timeRangeValue":"7",
-                    "timeRangeUnit":"days",
+                    "negated": false,
+                    "operator": "AND",
                     "conditions":[
                         {"conditionType":"EQUALS","field":"count","value":"5"}
                     ]
@@ -101,7 +93,7 @@ class CohortEntryControllerTest(
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(200)
-        assertThat(result.response.contentAsString).contains("\"condition\":\"PERFORMED\"")
+        assertThat(result.response.contentAsString).contains("\"negated\":false")
     }
 
     @Test
@@ -110,7 +102,7 @@ class CohortEntryControllerTest(
 
         val result = mockMvc.put("/api/cohort/1/entries/999") {
             contentType = MediaType.APPLICATION_JSON
-            content = """{"condition":"NOT_PERFORMED","conditions":[]}"""
+            content = """{"negated":false,"conditions":[]}"""
         }.andReturn()
 
         assertThat(result.response.status).isEqualTo(404)
@@ -137,8 +129,8 @@ class CohortEntryControllerTest(
     @Test
     fun `POST ordering reorders entries and returns 200`() {
         val entries = listOf(
-            entryDto(id = 11L, condition = EntryConditionType.PERFORMED, ordering = 0),
-            entryDto(id = 10L, condition = EntryConditionType.NOT_PERFORMED, ordering = 1),
+            entryDto(id = 11L, negated = false, ordering = 0),
+            entryDto(id = 10L, negated = true, ordering = 1),
         )
         whenever(cohortEntryService.updateOrdering(eq(1L), any())).thenReturn(entries)
 
@@ -168,13 +160,12 @@ class CohortEntryControllerTest(
     private fun entryDto(
         id: Long,
         cohortId: Long = 1L,
-        condition: EntryConditionType = EntryConditionType.NOT_PERFORMED,
+        negated: Boolean = false,
+        inCohort: Boolean = false,
         ordering: Int = 0,
     ) = CohortEntryDto(
-        id = id, cohortId = cohortId, condition = condition, ordering = ordering,
-        operator = null, referencedCohortId = null,
-        timeScope = null, timeRangeType = null, timeRangeValue = null, timeRangeUnit = null, timeQualifier = null,
-        timeStart = null, timeEnd = null,
+        id = id, cohortId = cohortId, negated = negated, inCohort = inCohort,
+        ordering = ordering, operator = null, referencedCohortId = null,
         updatedAt = updatedAt, conditions = emptyList(),
     )
 }

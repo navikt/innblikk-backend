@@ -114,11 +114,8 @@ class CohortControllerTest(
             updatedAt = updatedAt, changedByEmail = null, changedByName = null, changedByNavIdent = null,
             entries = listOf(
                 CohortEntryDto(
-                    id = 10L, cohortId = 1L, condition = EntryConditionType.NOT_PERFORMED, ordering = 0,
+                    id = 10L, cohortId = 1L, negated = true, inCohort = false, ordering = 0,
                     operator = null, referencedCohortId = null,
-                    timeScope = TimeScope.DURING, timeRangeType = TimeRangeType.BETWEEN,
-                    timeRangeValue = null, timeRangeUnit = null, timeQualifier = null,
-                    timeStart = updatedAt, timeEnd = updatedAt.plusDays(1),
                     updatedAt = updatedAt,
                     conditions = listOf(
                         CohortEntryConditionDto(
@@ -136,7 +133,7 @@ class CohortControllerTest(
         assertThat(result.response.status).isEqualTo(200)
         val body = result.response.contentAsString
         assertThat(body).contains("\"name\":\"Detail\"")
-        assertThat(body).contains("\"condition\":\"NOT_PERFORMED\"")
+        assertThat(body).contains("\"negated\":true")
         assertThat(body).contains("\"platform\"")
     }
 
