@@ -4,6 +4,7 @@ CREATE TABLE cohorts
     website_id  UUID         NOT NULL,
     name        VARCHAR(255) NOT NULL,
     description TEXT,
+    deleted_at  TIMESTAMP,
     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT uq_cohorts_name_website UNIQUE (name, website_id)

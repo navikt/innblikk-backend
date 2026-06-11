@@ -18,7 +18,6 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import java.time.LocalDateTime
-import java.util.Optional
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -80,7 +79,7 @@ class CohortServiceTest {
 
     @Test
     fun `getAllCohorts returns all cohorts`() {
-        whenever(cohortRepository.findAll()).thenReturn(listOf(
+        whenever(cohortRepository.findAllByDeletedAtIsNull()).thenReturn(listOf(
             cohort(id = 1L, name = "A"), cohort(id = 2L, name = "B")
         ))
         whenever(changeService.getChangeByEntityIdAndEntityType(any(), any())).thenReturn(null)
@@ -94,7 +93,7 @@ class CohortServiceTest {
 
     @Test
     fun `getAllCohorts returns empty list when none exist`() {
-        whenever(cohortRepository.findAll()).thenReturn(emptyList())
+        whenever(cohortRepository.findAllByDeletedAtIsNull()).thenReturn(emptyList())
 
         val result = cohortService.getAllCohorts()
 
@@ -103,7 +102,7 @@ class CohortServiceTest {
 
     @Test
     fun `getCohortsByWebsiteId returns filtered cohorts`() {
-        whenever(cohortRepository.findAllByWebsiteId(websiteId)).thenReturn(listOf(cohort(id = 1L, name = "A")))
+        whenever(cohortRepository.findAllByWebsiteIdAndDeletedAtIsNull(websiteId)).thenReturn(listOf(cohort(id = 1L, name = "A")))
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
         val result = cohortService.getCohortsByWebsiteId(websiteId)
@@ -115,7 +114,7 @@ class CohortServiceTest {
     @Test
     fun `getCohortsByWebsiteId returns empty list when none for website`() {
         val otherWebsiteId = UUID.fromString("22222222-2222-2222-2222-222222222222")
-        whenever(cohortRepository.findAllByWebsiteId(otherWebsiteId)).thenReturn(emptyList())
+        whenever(cohortRepository.findAllByWebsiteIdAndDeletedAtIsNull(otherWebsiteId)).thenReturn(emptyList())
 
         val result = cohortService.getCohortsByWebsiteId(otherWebsiteId)
 
@@ -133,7 +132,7 @@ class CohortServiceTest {
             )
         )
         entity.entries.add(entry)
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
         val result = cohortService.getCohortById(1L)
@@ -152,7 +151,7 @@ class CohortServiceTest {
         val entity = cohort(id = 1L, name = "Test")
         entity.entries.add(cohortEntry(id = 11L, cohort = entity, negated = false, ordering = 1))
         entity.entries.add(cohortEntry(id = 10L, cohort = entity, negated = true, ordering = 0))
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
         val result = cohortService.getCohortById(1L)
@@ -163,7 +162,7 @@ class CohortServiceTest {
 
     @Test
     fun `getCohortById returns null when not found`() {
-        whenever(cohortRepository.findById(99L)).thenReturn(Optional.empty())
+        whenever(cohortRepository.findActiveById(99L)).thenReturn(null)
 
         assertThat(cohortService.getCohortById(99L)).isNull()
     }
@@ -171,7 +170,7 @@ class CohortServiceTest {
     @Test
     fun `updateCohort saves changes and returns dto`() {
         val entity = cohort(id = 1L, name = "Old name")
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
         whenever(cohortRepository.existsByNameAndWebsiteId("New name", websiteId)).thenReturn(false)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
@@ -194,7 +193,7 @@ class CohortServiceTest {
     @Test
     fun `updateCohort allows same name for same entity`() {
         val entity = cohort(id = 1L, name = "Same name")
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
@@ -208,7 +207,7 @@ class CohortServiceTest {
     @Test
     fun `updateCohort throws when new name already exists`() {
         val entity = cohort(id = 1L, name = "Old name")
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
         whenever(cohortRepository.existsByNameAndWebsiteId("Taken", websiteId)).thenReturn(true)
 
         assertThatThrownBy {
@@ -218,25 +217,28 @@ class CohortServiceTest {
 
     @Test
     fun `updateCohort returns null when not found`() {
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.empty())
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(null)
 
         assertThat(cohortService.updateCohort(1L, UpdateCohortRequest(name = "x", websiteId = websiteId))).isNull()
         verifyNoInteractions(changeService)
     }
 
     @Test
-    fun `deleteCohort deletes and records change`() {
+    fun `deleteCohort soft-deletes and records change`() {
         val entity = cohort(id = 1L, name = "To delete")
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.of(entity))
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
+        whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(entity)
 
         assertThat(cohortService.deleteCohort(1L)).isTrue()
-        verify(cohortRepository).delete(entity)
+        val captor = argumentCaptor<CohortEntity>()
+        verify(cohortRepository).save(captor.capture())
+        assertThat(captor.firstValue.deletedAt).isNotNull()
         verify(changeService).createChange(1L, EntityType.COHORT, ChangeType.DELETED)
     }
 
     @Test
     fun `deleteCohort returns false when not found`() {
-        whenever(cohortRepository.findById(1L)).thenReturn(Optional.empty())
+        whenever(cohortRepository.findActiveById(1L)).thenReturn(null)
 
         assertThat(cohortService.deleteCohort(1L)).isFalse()
         verifyNoInteractions(changeService)

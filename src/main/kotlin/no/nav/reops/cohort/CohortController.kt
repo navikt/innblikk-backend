@@ -55,4 +55,12 @@ class CohortController(private val cohortService: CohortService) {
         val deleted = cohortService.deleteCohort(id)
         return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
+
+    @PostMapping("/{id}/restore")
+    fun restoreCohort(
+        @PathVariable id: Long,
+    ): ResponseEntity<CohortDto> {
+        val restored = cohortService.restoreCohort(id)
+        return if (restored != null) ResponseEntity.ok(restored) else ResponseEntity.notFound().build()
+    }
 }

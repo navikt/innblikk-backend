@@ -28,6 +28,7 @@ class CohortEntity(
     @Column(name = "website_id", nullable = false) var websiteId: UUID,
     @Column(name = "name", nullable = false) var name: String,
     @Column(name = "description") var description: String? = null,
+    @Column(name = "deleted_at") var deletedAt: LocalDateTime? = null,
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     @OneToMany(mappedBy = "cohort", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
