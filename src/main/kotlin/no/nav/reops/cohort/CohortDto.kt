@@ -34,11 +34,6 @@ data class CohortEntryDto(
     val ordering: Int,
     val operator: LogicalOperator?,
     val referencedCohortId: Long?,
-    // Time filtering — present when set, null otherwise (not yet used in SQL generation)
-    val timeValue: Int? = null,
-    val timeUnit: String? = null,
-    val timeStart: LocalDateTime? = null,
-    val timeEnd: LocalDateTime? = null,
     val updatedAt: LocalDateTime,
     val conditions: List<CohortEntryConditionDto>,
 )
@@ -68,11 +63,6 @@ data class CreateCohortEntryRequest(
     val inCohort: Boolean = false,
     val operator: LogicalOperator? = null,
     val referencedCohortId: Long? = null,
-    // Time filtering — optional, not yet used in SQL generation (TODO: implement in cohortSqlResolver)
-    val timeValue: Int? = null,
-    val timeUnit: String? = null,
-    val timeStart: LocalDateTime? = null,
-    val timeEnd: LocalDateTime? = null,
     val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
 )
 

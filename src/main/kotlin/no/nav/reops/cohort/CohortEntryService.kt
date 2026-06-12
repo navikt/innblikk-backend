@@ -28,12 +28,6 @@ class CohortEntryService(
             operator = request.operator,
             referencedCohortId = request.referencedCohortId,
             ordering = maxOrdering + 1,
-            // Time filtering — stored for future use, not yet applied in SQL generation
-            // TODO: implement time-scoped filtering in cohortSqlResolver when UI supports it
-            timeValue = request.timeValue,
-            timeUnit = request.timeUnit,
-            timeStart = request.timeStart,
-            timeEnd = request.timeEnd,
         )
 
         request.conditions.forEachIndexed { index, condReq ->
@@ -61,10 +55,6 @@ class CohortEntryService(
         entry.inCohort = request.inCohort
         entry.operator = request.operator
         entry.referencedCohortId = request.referencedCohortId
-        entry.timeValue = request.timeValue
-        entry.timeUnit = request.timeUnit
-        entry.timeStart = request.timeStart
-        entry.timeEnd = request.timeEnd
 
         entry.conditions.clear()
         request.conditions.forEachIndexed { index, condReq ->
@@ -122,10 +112,6 @@ class CohortEntryService(
         ordering = ordering,
         operator = operator,
         referencedCohortId = referencedCohortId,
-        timeValue = timeValue,
-        timeUnit = timeUnit,
-        timeStart = timeStart,
-        timeEnd = timeEnd,
         updatedAt = updatedAt,
         conditions = conditions.sortedBy { it.ordering }.map { it.toConditionDto() },
     )

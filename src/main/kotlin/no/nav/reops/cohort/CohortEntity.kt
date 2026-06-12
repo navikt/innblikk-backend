@@ -18,6 +18,7 @@ import jakarta.persistence.UniqueConstraint
 import java.time.LocalDateTime
 import java.util.UUID
 
+
 @Entity
 @Table(
     name = "cohorts",
@@ -45,11 +46,6 @@ class CohortEntryEntity(
     @Enumerated(EnumType.STRING) @Column(name = "operator") var operator: LogicalOperator? = null,
     @Column(name = "referenced_cohort_id") var referencedCohortId: Long? = null,
     @Column(name = "ordering", nullable = false) var ordering: Int = 0,
-    // Time filtering — stored but not yet used in SQL generation (TODO: implement in cohortSqlResolver)
-    @Column(name = "time_value") var timeValue: Int? = null,
-    @Column(name = "time_unit") var timeUnit: String? = null,
-    @Column(name = "time_start") var timeStart: LocalDateTime? = null,
-    @Column(name = "time_end") var timeEnd: LocalDateTime? = null,
     @Column(name = "updated_at", nullable = false) var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     @OneToMany(mappedBy = "cohortEntry", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)

@@ -19,13 +19,6 @@ CREATE TABLE cohort_entries
     operator             VARCHAR(32),
     referenced_cohort_id BIGINT,
     ordering             INT         NOT NULL DEFAULT 0,
-    -- Time filtering (not yet implemented in UI/SQL generation)
-    -- Relative window: "last N days/weeks" — populated when using relative time range
-    time_value           INT,
-    time_unit            VARCHAR(16),
-    -- Absolute window: "between date A and date B" — populated when using fixed date range
-    time_start           TIMESTAMP,
-    time_end             TIMESTAMP,
     updated_at           TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_cohort_entries_cohort FOREIGN KEY (cohort_id) REFERENCES cohorts (id) ON DELETE CASCADE,
