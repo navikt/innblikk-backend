@@ -1,5 +1,5 @@
-name: "Deploy"
-run-name: "Deploy"
+name: "Deploy Dev"
+run-name: "Deploy Dev @ ${{ github.ref_name }} — ${{ github.sha }}"
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
     paths-ignore:
       - '.compose/**'
       - 'README.md'
-  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -54,6 +53,11 @@ jobs:
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
           build_args: CI=true
+      - name: Show image for later prod deploy
+        run: |
+          echo "========================================"
+          echo "image=${{ steps.docker-build-push.outputs.image }}"
+          echo "========================================"
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
 
@@ -70,19 +74,4 @@ jobs:
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais-dev.yaml
-          VAR: image=${{ needs.docker.outputs.image }}
-
-  deploy-application-prod:
-    needs: [docker, deploy-application-dev]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-      - name: Deploy application to Prod
-        uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais-prod.yaml
           VAR: image=${{ needs.docker.outputs.image }}
