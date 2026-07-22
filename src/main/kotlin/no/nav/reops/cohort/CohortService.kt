@@ -114,10 +114,6 @@ class CohortService(
         ordering = ordering,
         operator = operator,
         referencedCohortId = referencedCohortId,
-        timeValue = timeValue,
-        timeUnit = timeUnit,
-        timeStart = timeStart,
-        timeEnd = timeEnd,
         updatedAt = updatedAt,
         conditions = conditions.sortedBy { it.ordering }.map { it.toConditionDto() },
     )
