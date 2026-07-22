@@ -19,11 +19,11 @@ ENV CI=${CI}
 RUN ./gradlew nativeCompile --no-daemon -PjavaVersion=25 \
     && strip build/native/nativeCompile/app
 
-# Stage 2: Minimal runtime image (Chainguard with glibc)
-FROM cgr.dev/chainguard/glibc-dynamic:latest
+# Stage 2: Minimal runtime image (Chainguard wolfi-base, apk-managed glibc/zlib)
+FROM cgr.dev/chainguard/wolfi-base@sha256:02dab76bd852a70556b5b2002195c8a5fdab77d323c433bf6642aab080489795
 LABEL maintainer="team-researchops"
+RUN apk update && apk add --no-cache glibc zlib && rm -rf /var/cache/apk/*
 WORKDIR /app
-COPY --from=builder /usr/lib64/libz.so.1 /lib/libz.so.1
 COPY --from=builder /build/build/native/nativeCompile/app ./app
 EXPOSE 8080
 ENTRYPOINT ["./app"]
