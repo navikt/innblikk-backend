@@ -108,22 +108,18 @@ class CohortControllerTest(
     }
 
     @Test
-    fun `GET by id returns cohort detail with entries and 200`() {
+    fun `GET by id returns cohort detail with criteria tree and 200`() {
         val detail = CohortDetailDto(
             id = 1L, websiteId = websiteId, name = "Detail", description = null,
             updatedAt = updatedAt, changedByEmail = null, changedByName = null, changedByNavIdent = null,
-            entries = listOf(
-                CohortEntryDto(
-                    id = 10L, cohortId = 1L, negated = true, inCohort = false, ordering = 0,
-                    operator = null, referencedCohortId = null,
-                    updatedAt = updatedAt,
-                    conditions = listOf(
-                        CohortEntryConditionDto(
-                            id = 100L, ordering = 1, conditionType = ComparisonOperator.CONTAINS,
-                            field = "platform", value = "https://example.no"
-                        )
-                    )
-                )
+            root = CohortNodeDto.GroupNodeDto(
+                id = 10L, combinator = LogicalOperator.AND, negated = true,
+                children = listOf(
+                    CohortNodeDto.ConditionNodeDto(
+                        id = 100L, conditionType = ComparisonOperator.CONTAINS,
+                        field = "platform", value = "https://example.no",
+                    ),
+                ),
             ),
         )
         whenever(cohortService.getCohortById(1L)).thenReturn(detail)

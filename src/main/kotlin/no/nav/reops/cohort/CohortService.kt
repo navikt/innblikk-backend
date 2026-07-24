@@ -11,6 +11,7 @@ import java.util.UUID
 @Service
 class CohortService(
     private val cohortRepository: CohortRepository,
+    private val cohortNodeRepository: CohortNodeRepository,
     private val changeService: ChangeService,
 ) {
 
@@ -93,6 +94,7 @@ class CohortService(
 
     private fun CohortEntity.toDetailDto(): CohortDetailDto {
         val latestChange = changeService.getChangeByEntityIdAndEntityType(requireNotNull(id), EntityType.COHORT)
+        val nodes = cohortNodeRepository.findAllByCohortIdOrderByOrderingAsc(requireNotNull(id))
         return CohortDetailDto(
             id = requireNotNull(id),
             websiteId = websiteId,
@@ -102,27 +104,7 @@ class CohortService(
             changedByEmail = latestChange?.changedByEmail,
             changedByName = latestChange?.changedByName,
             changedByNavIdent = latestChange?.changedByNavIdent,
-            entries = entries.sortedBy { it.ordering }.map { it.toEntryDto() },
+            root = if (nodes.isEmpty()) null else CohortNodeTreeBuilder.build(nodes),
         )
     }
-
-    private fun CohortEntryEntity.toEntryDto(): CohortEntryDto = CohortEntryDto(
-        id = requireNotNull(id),
-        cohortId = requireNotNull(cohort.id),
-        negated = negated,
-        inCohort = inCohort,
-        ordering = ordering,
-        operator = operator,
-        referencedCohortId = referencedCohortId,
-        updatedAt = updatedAt,
-        conditions = conditions.sortedBy { it.ordering }.map { it.toConditionDto() },
-    )
-
-    private fun CohortEntryConditionEntity.toConditionDto(): CohortEntryConditionDto = CohortEntryConditionDto(
-        id = requireNotNull(id),
-        ordering = ordering,
-        conditionType = conditionType,
-        field = field,
-        value = value,
-    )
 }

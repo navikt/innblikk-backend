@@ -27,6 +27,9 @@ class CohortServiceTest {
     private lateinit var cohortRepository: CohortRepository
 
     @Mock
+    private lateinit var cohortNodeRepository: CohortNodeRepository
+
+    @Mock
     private lateinit var changeService: ChangeService
 
     private lateinit var cohortService: CohortService
@@ -36,7 +39,7 @@ class CohortServiceTest {
 
     @BeforeEach
     fun setUp() {
-        cohortService = CohortService(cohortRepository, changeService)
+        cohortService = CohortService(cohortRepository, cohortNodeRepository, changeService)
     }
 
     @Test
@@ -122,42 +125,38 @@ class CohortServiceTest {
     }
 
     @Test
-    fun `getCohortById returns detail dto with entries and conditions`() {
+    fun `getCohortById returns detail dto with the criteria tree`() {
         val entity = cohort(id = 1L, name = "Test")
-        val entry = cohortEntry(id = 10L, cohort = entity, negated = true, ordering = 0)
-        entry.conditions.add(
-            CohortEntryConditionEntity(
-                id = 100L, cohortEntry = entry, ordering = 1,
-                conditionType = ComparisonOperator.CONTAINS, field = "platform", value = "https://example.no"
-            )
+        val root = node(id = 10L, cohortId = 1L, parentId = null, nodeType = CohortNodeType.GROUP)
+        val condition = node(
+            id = 100L, cohortId = 1L, parentId = 10L, nodeType = CohortNodeType.CONDITION, ordering = 0,
+            field = "platform", conditionType = ComparisonOperator.CONTAINS, value = "https://example.no",
         )
-        entity.entries.add(entry)
         whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
+        whenever(cohortNodeRepository.findAllByCohortIdOrderByOrderingAsc(1L)).thenReturn(listOf(root, condition))
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
         val result = cohortService.getCohortById(1L)
 
         assertThat(result).isNotNull
         assertThat(result!!.id).isEqualTo(1L)
-        assertThat(result.entries).hasSize(1)
-        assertThat(result.entries[0].negated).isTrue()
-        assertThat(result.entries[0].conditions).hasSize(1)
-        assertThat(result.entries[0].conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
-        assertThat(result.entries[0].conditions[0].field).isEqualTo("platform")
+        val group = result.root as CohortNodeDto.GroupNodeDto
+        assertThat(group.children).hasSize(1)
+        val conditionDto = group.children.single() as CohortNodeDto.ConditionNodeDto
+        assertThat(conditionDto.conditionType).isEqualTo(ComparisonOperator.CONTAINS)
+        assertThat(conditionDto.field).isEqualTo("platform")
     }
 
     @Test
-    fun `getCohortById returns entries sorted by ordering`() {
+    fun `getCohortById returns null root when no criteria have been saved yet`() {
         val entity = cohort(id = 1L, name = "Test")
-        entity.entries.add(cohortEntry(id = 11L, cohort = entity, negated = false, ordering = 1))
-        entity.entries.add(cohortEntry(id = 10L, cohort = entity, negated = true, ordering = 0))
         whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
+        whenever(cohortNodeRepository.findAllByCohortIdOrderByOrderingAsc(1L)).thenReturn(emptyList())
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
         val result = cohortService.getCohortById(1L)
 
-        assertThat(result!!.entries[0].ordering).isEqualTo(0)
-        assertThat(result.entries[1].ordering).isEqualTo(1)
+        assertThat(result!!.root).isNull()
     }
 
     @Test
@@ -253,16 +252,19 @@ class CohortServiceTest {
         id = id, websiteId = websiteId, name = name, description = description, updatedAt = updatedAt,
     )
 
-    private fun cohortEntry(
+    private fun node(
         id: Long,
-        cohort: CohortEntity,
-        negated: Boolean = false,
-        inCohort: Boolean = false,
-        operator: LogicalOperator? = null,
+        cohortId: Long,
+        parentId: Long?,
+        nodeType: CohortNodeType,
         ordering: Int = 0,
-    ) = CohortEntryEntity(
-        id = id, cohort = cohort, negated = negated, inCohort = inCohort,
-        operator = operator, ordering = ordering, updatedAt = updatedAt,
+        combinator: LogicalOperator? = if (nodeType == CohortNodeType.GROUP) LogicalOperator.AND else null,
+        field: String? = null,
+        conditionType: ComparisonOperator? = null,
+        value: String? = null,
+    ) = CohortNodeEntity(
+        id = id, cohortId = cohortId, parentId = parentId, nodeType = nodeType, ordering = ordering,
+        combinator = combinator, field = field, conditionType = conditionType, value = value, updatedAt = updatedAt,
     )
 
     private fun changeDto(entityId: Long, changeType: ChangeType) = ChangeDto(
