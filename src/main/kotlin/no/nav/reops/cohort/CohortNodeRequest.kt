@@ -30,9 +30,19 @@ sealed interface CohortNodeRequest {
         val children: List<CohortNodeRequest> = emptyList(),
     ) : CohortNodeRequest
 
-    /** A single field predicate — a leaf. */
+    /**
+     * A single field predicate — a leaf.
+     *
+     * Exactly one of [field]/[paramKey] must be set: [field] for a real
+     * event/session column, [paramKey] for a custom event parameter stored in
+     * `event_data.event_parameters` (key/value pairs, e.g. a form field's
+     * `tekst`/`valg`/`data`). Two conditions on different param keys within the
+     * same group correlate to the same underlying event row via separate
+     * `UNNEST` joins in the resolver, not a plain column match.
+     */
     data class ConditionNode(
-        val field: String,
+        val field: String? = null,
+        val paramKey: String? = null,
         val conditionType: ComparisonOperator,
         val value: String,
     ) : CohortNodeRequest

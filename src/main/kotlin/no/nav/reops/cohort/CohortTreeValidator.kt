@@ -9,6 +9,7 @@ class CohortTreeValidationException(val violations: List<String>) :
  * - non-root groups must not be empty
  * - depth must not exceed [maxDepth]
  * - total node count must not exceed [maxNodes]
+ * - every ConditionNode must set exactly one of field/paramKey
  * - SequenceNode anchor/target subtrees must not contain CohortRefNode or nested SequenceNode
  * - SequenceNode windowValue must be positive
  *
@@ -58,7 +59,16 @@ class CohortTreeValidator(
                 node.children.forEach { walk(it, depth + 1, isRoot = false, violations) }
             }
 
-            is CohortNodeRequest.ConditionNode -> Unit
+            is CohortNodeRequest.ConditionNode -> {
+                val hasField = !node.field.isNullOrBlank()
+                val hasParamKey = !node.paramKey.isNullOrBlank()
+                if (hasField == hasParamKey) {
+                    violations.add(
+                        "a condition at depth $depth must set exactly one of field/paramKey " +
+                            "(had field=${node.field}, paramKey=${node.paramKey})",
+                    )
+                }
+            }
 
             is CohortNodeRequest.CohortRefNode -> Unit
 

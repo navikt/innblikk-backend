@@ -47,6 +47,7 @@ class CohortNodeTreePersister(private val save: (CohortNodeEntity) -> CohortNode
                         nodeType = CohortNodeType.CONDITION,
                         ordering = ordering,
                         field = node.field,
+                        paramKey = node.paramKey,
                         conditionType = node.conditionType,
                         value = node.value,
                         sequenceRole = sequenceRole,

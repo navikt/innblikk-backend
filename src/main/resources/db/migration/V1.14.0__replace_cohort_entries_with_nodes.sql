@@ -16,7 +16,8 @@ CREATE TABLE cohort_nodes
     occurrence_count       INT,
 
     -- CONDITION
-    field                 VARCHAR(255),
+    field                 VARCHAR(255), -- real column name; mutually exclusive with param_key
+    param_key             VARCHAR(255), -- custom event parameter key (event_data.event_parameters); mutually exclusive with field
     condition_type        VARCHAR(32),
     value                 TEXT,
 

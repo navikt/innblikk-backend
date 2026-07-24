@@ -33,6 +33,7 @@ class CohortNodeEntity(
 
     // CONDITION
     @Column(name = "field") var field: String? = null,
+    @Column(name = "param_key") var paramKey: String? = null,
     @Enumerated(EnumType.STRING) @Column(name = "condition_type") var conditionType: ComparisonOperator? = null,
     @Column(name = "value") var value: String? = null,
 

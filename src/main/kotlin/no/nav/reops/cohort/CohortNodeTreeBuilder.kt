@@ -39,7 +39,8 @@ object CohortNodeTreeBuilder {
 
     private fun buildCondition(entity: CohortNodeEntity): CohortNodeDto.ConditionNodeDto = CohortNodeDto.ConditionNodeDto(
         id = requireNotNull(entity.id),
-        field = requireNotNull(entity.field),
+        field = entity.field,
+        paramKey = entity.paramKey,
         conditionType = requireNotNull(entity.conditionType),
         value = requireNotNull(entity.value),
     )
