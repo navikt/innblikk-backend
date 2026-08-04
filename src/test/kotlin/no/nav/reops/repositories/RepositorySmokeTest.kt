@@ -13,9 +13,9 @@ import no.nav.reops.project.ProjectRepository
 import no.nav.reops.query.QueryEntity
 import no.nav.reops.query.QueryRepository
 import no.nav.reops.cohort.CohortEntity
-import no.nav.reops.cohort.CohortEntryConditionEntity
-import no.nav.reops.cohort.CohortEntryEntity
-import no.nav.reops.cohort.CohortEntryRepository
+import no.nav.reops.cohort.CohortNodeEntity
+import no.nav.reops.cohort.CohortNodeRepository
+import no.nav.reops.cohort.CohortNodeType
 import no.nav.reops.cohort.CohortRepository
 import no.nav.reops.cohort.ComparisonOperator
 import org.assertj.core.api.Assertions.assertThat
@@ -38,7 +38,7 @@ class RepositorySmokeTest(
     private val graphRepository: GraphRepository,
     private val queryRepository: QueryRepository,
     private val cohortRepository: CohortRepository,
-    private val cohortEntryRepository: CohortEntryRepository,
+    private val cohortNodeRepository: CohortNodeRepository,
     private val entityManager: EntityManager,
 ) {
 
@@ -171,43 +171,34 @@ class RepositorySmokeTest(
     }
 
     @Test
-    fun `cohort entry repository can save and read with conditions`() {
+    fun `cohort node repository can save and read a condition node`() {
         val cohort = cohortRepository.save(
             CohortEntity(
                 websiteId = UUID.fromString("98c1936a-38a4-11f1-8197-5a715c0b0a36"),
-                name = "cohort for entries",
+                name = "cohort for nodes",
             )
         )
         entityManager.flush()
         entityManager.clear()
 
-        val entry = CohortEntryEntity(
-            cohort = cohort,
-            negated = true,
-            inCohort = false,
-            operator = null,
-        )
-        entry.conditions.add(
-            CohortEntryConditionEntity(
-                cohortEntry = entry,
-                ordering = 1,
-                conditionType = ComparisonOperator.CONTAINS,
-                field = "platform",
-                value = "https://example.no",
-            )
+        val node = CohortNodeEntity(
+            cohortId = requireNotNull(cohort.id),
+            nodeType = CohortNodeType.CONDITION,
+            field = "platform",
+            conditionType = ComparisonOperator.CONTAINS,
+            value = "https://example.no",
         )
 
-        val saved = cohortEntryRepository.save(entry)
+        val saved = cohortNodeRepository.save(node)
         assertThat(saved.id).isNotNull()
 
         entityManager.flush()
         entityManager.clear()
 
-        val loaded = cohortEntryRepository.findById(saved.id!!)
+        val loaded = cohortNodeRepository.findById(saved.id!!)
         assertThat(loaded).isPresent
-        assertThat(loaded.get().negated).isTrue()
-        assertThat(loaded.get().conditions).hasSize(1)
-        assertThat(loaded.get().conditions[0].conditionType).isEqualTo(ComparisonOperator.CONTAINS)
-        assertThat(loaded.get().conditions[0].field).isEqualTo("platform")
+        assertThat(loaded.get().field).isEqualTo("platform")
+        assertThat(loaded.get().conditionType).isEqualTo(ComparisonOperator.CONTAINS)
+        assertThat(loaded.get().value).isEqualTo("https://example.no")
     }
 }

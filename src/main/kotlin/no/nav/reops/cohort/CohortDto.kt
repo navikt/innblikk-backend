@@ -23,27 +23,8 @@ data class CohortDetailDto(
     val changedByEmail: String?,
     val changedByName: String?,
     val changedByNavIdent: String?,
-    val entries: List<CohortEntryDto>,
-)
-
-data class CohortEntryDto(
-    val id: Long,
-    val cohortId: Long,
-    val negated: Boolean,
-    val inCohort: Boolean,
-    val ordering: Int,
-    val operator: LogicalOperator?,
-    val referencedCohortId: Long?,
-    val updatedAt: LocalDateTime,
-    val conditions: List<CohortEntryConditionDto>,
-)
-
-data class CohortEntryConditionDto(
-    val id: Long,
-    val ordering: Int,
-    val conditionType: ComparisonOperator,
-    val field: String,
-    val value: String,
+    /** Root of the criteria tree, or null if no criteria have been saved yet. */
+    val root: CohortNodeDto?,
 )
 
 data class CreateCohortRequest(
@@ -56,23 +37,4 @@ data class UpdateCohortRequest(
     val name: String,
     val description: String? = null,
     val websiteId: UUID,
-)
-
-data class CreateCohortEntryRequest(
-    val negated: Boolean = false,
-    val inCohort: Boolean = false,
-    val operator: LogicalOperator? = null,
-    val referencedCohortId: Long? = null,
-    val conditions: List<CreateCohortEntryConditionRequest> = emptyList(),
-)
-
-data class CreateCohortEntryConditionRequest(
-    val conditionType: ComparisonOperator,
-    val field: String,
-    val value: String,
-)
-
-data class CohortEntryOrderingEntry(
-    val id: Long,
-    val ordering: Int,
 )
