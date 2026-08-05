@@ -32,7 +32,13 @@ spring:
         jwt:
           audiences:
             - start-umami
-          issuer-uri: http://localhost:8080/issueissue
+          # jwk-set-uri (not issuer-uri): local dev only, checked in for mock-oauth2-server.
+          # issuer-uri would enforce an exact `iss` claim match, but mock-oauth2-server derives
+          # `iss` from whatever Host header the token requester used, which doesn't stay
+          # consistent across host-run backend, docker-compose backend, and innblikk-frontend's
+          # local proxy. jwk-set-uri only verifies signature + audience, sidestepping that. Real
+          # Azure AD issuer-uri validation still applies in prod via application-kubernetes.yaml.
+          jwk-set-uri: http://localhost:8080/issueissue/jwks
 
 springdoc:
   api-docs:

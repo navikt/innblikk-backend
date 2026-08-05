@@ -50,6 +50,38 @@ services: # -- Postgres --
             }
           ]
         }
+
+  # Builds and runs the *actual* GraalVM native image (same Dockerfile as CI/prod), wired to
+  # the services above. Opt-in via profile so it doesn't slow down the default `docker compose up`
+  # inner-loop — bootRun on the JVM is fine for day-to-day work.
+  #
+  # Use this before merging any change that touches @RequestBody/@ResponseBody DTOs, especially
+  # polymorphic ones (@JsonSubTypes/sealed interfaces). bootRun runs on the JVM with full
+  # reflection available and will NOT catch native-image reflection-hint gaps — those only
+  # surface once compiled ahead-of-time, which is what actually runs in dev/prod. See
+  # NativeRuntimeHints.kt for where to register hints if this catches something.
+  #
+  #   docker compose --profile native up --build app
+  #
+  app:
+    profiles: [ "native" ]
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    depends_on:
+      start-umami-backend-db:
+        condition: service_healthy
+      mock-oauth2-server:
+        condition: service_started
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://start-umami-backend-db:5432/start-umami?user=start-umami&password=start-umami
+      # Overrides application.yaml's default jwk-set-uri (which points at localhost:8080, fine
+      # for a host-run backend but unreachable from inside this container) with the
+      # internal-network hostname. See application.yaml for why jwk-set-uri over issuer-uri.
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://mock-oauth2-server:8080/issueissue/jwks
+
 #
 #  redis:
 #    image: redis:7
