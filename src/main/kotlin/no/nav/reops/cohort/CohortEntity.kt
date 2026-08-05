@@ -37,4 +37,6 @@ enum class ComparisonOperator {
     GREATER_THAN_OR_EQUAL,
     IN_SET,
     NOT_IN_SET,
+    /** Only valid on the `created_at` field — see CohortTreeValidator. Value is a JSON `{from, to}` pair. */
+    BETWEEN,
 }

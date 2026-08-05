@@ -68,6 +68,12 @@ class CohortTreeValidator(
                             "(had field=${node.field}, paramKey=${node.paramKey})",
                     )
                 }
+                if (node.conditionType == ComparisonOperator.BETWEEN && node.field != "created_at") {
+                    violations.add(
+                        "a condition at depth $depth uses BETWEEN, which is only valid for the created_at field " +
+                            "(had field=${node.field})",
+                    )
+                }
             }
 
             is CohortNodeRequest.CohortRefNode -> Unit
