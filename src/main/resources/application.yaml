@@ -32,13 +32,6 @@ spring:
         jwt:
           audiences:
             - start-umami
-          # jwk-set-uri (not issuer-uri): local dev only, checked in for mock-oauth2-server.
-          # issuer-uri would enforce an exact `iss` claim match, but mock-oauth2-server derives
-          # `iss` from whatever Host header the token requester used, which doesn't stay
-          # consistent across host-run backend, docker-compose backend, and innblikk-frontend's
-          # local proxy. jwk-set-uri only verifies signature + audience, sidestepping that. Real
-          # Azure AD issuer-uri validation still applies in prod via application-kubernetes.yaml.
-          jwk-set-uri: http://localhost:8080/issueissue/jwks
 
 springdoc:
   api-docs:
@@ -68,4 +61,27 @@ logging:
     org.springframework.web: WARN
     no.nav.reops: INFO
     org.flywaydb: INFO
+
+---
+# jwk-set-uri (not issuer-uri): local dev only, checked in for mock-oauth2-server.
+# issuer-uri would enforce an exact `iss` claim match, but mock-oauth2-server derives
+# `iss` from whatever Host header the token requester used, which doesn't stay
+# consistent across host-run backend, docker-compose backend, and innblikk-frontend's
+# local proxy. jwk-set-uri only verifies signature + audience, sidestepping that.
+#
+# Scoped to "!kubernetes" (i.e. active whenever the kubernetes profile is NOT active)
+# rather than being set unconditionally above: @ConditionalOnProperty on jwk-set-uri
+# treats ANY present value - including an empty string - as "set", and takes priority
+# over issuer-uri. So if this were unconditional, application-kubernetes.yaml would
+# have no way to override it back to issuer-uri-based validation, and every deployed
+# environment would silently try to validate JWTs against this literal localhost URL.
+spring:
+  config:
+    activate:
+      on-profile: "!kubernetes"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/issueissue/jwks
 
