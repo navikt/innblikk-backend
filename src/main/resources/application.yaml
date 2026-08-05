@@ -63,11 +63,19 @@ logging:
     org.flywaydb: INFO
 
 ---
-# jwk-set-uri (not issuer-uri): local dev only, checked in for mock-oauth2-server.
+# jwk-set-uri (not issuer-uri): local `bootRun` (JVM) only, checked in for mock-oauth2-server.
 # issuer-uri would enforce an exact `iss` claim match, but mock-oauth2-server derives
 # `iss` from whatever Host header the token requester used, which doesn't stay
 # consistent across host-run backend, docker-compose backend, and innblikk-frontend's
 # local proxy. jwk-set-uri only verifies signature + audience, sidestepping that.
+#
+# This ONLY takes effect for `./gradlew bootRun` (regular JVM startup, profiles resolved
+# live at each launch). The native image (docker-compose's "native" profile, and the real
+# Dockerfile/k8s build) is AOT-processed with the "kubernetes" profile forced active (see
+# build.gradle.kts' processAot config) specifically so this document is skipped and the
+# issuer-uri-based JwtDecoder gets compiled in instead - @ConditionalOnProperty and profile
+# conditions are baked into the binary at AOT time, not re-evaluated at container startup,
+# so this doc being scoped to "!kubernetes" would otherwise be meaningless for a native run.
 #
 # Scoped to "!kubernetes" (i.e. active whenever the kubernetes profile is NOT active)
 # rather than being set unconditionally above: @ConditionalOnProperty on jwk-set-uri

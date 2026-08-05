@@ -112,6 +112,16 @@ tasks.named("processTestAot") {
 	enabled = false
 }
 
+// Native images bake @ConditionalOnProperty/@Profile bean decisions in at AOT-processing
+// time, not at actual runtime (see application.yaml). The native binary only ever runs as
+// this app in Kubernetes (see Dockerfile + docker-compose.yaml's "native" profile, which
+// exercises the same binary), so AOT must resolve conditions as if "kubernetes" were
+// active - otherwise application-kubernetes.yaml's overrides never take effect and the
+// wrong JwtDecoder bean gets compiled in permanently.
+tasks.named<org.springframework.boot.gradle.tasks.aot.ProcessAot>("processAot") {
+	systemProperty("spring.profiles.active", "kubernetes")
+}
+
 tasks.register<Exec>("generateChangelog") {
 	group = "documentation"
 	description = "Generates CHANGELOG.md from Conventional Commits using git-cliff (no versioning)."
