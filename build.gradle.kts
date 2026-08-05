@@ -120,6 +120,12 @@ tasks.named("processTestAot") {
 // wrong JwtDecoder bean gets compiled in permanently.
 tasks.named<org.springframework.boot.gradle.tasks.aot.ProcessAot>("processAot") {
 	systemProperty("spring.profiles.active", "kubernetes")
+	// Only the *presence* of issuer-uri matters for AOT's condition evaluation - the actual
+	// value below is discarded, since NAIS injects the real one as an env var at container
+	// runtime. But the condition eagerly resolves this placeholder during AOT processing
+	// itself (before any runtime env vars exist), so it needs *some* non-empty value here
+	// or processAot fails outright with an unresolved-placeholder error.
+	environment("AZURE_OPENID_CONFIG_ISSUER", "https://aot-build-placeholder.invalid")
 }
 
 tasks.register<Exec>("generateChangelog") {
