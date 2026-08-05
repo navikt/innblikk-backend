@@ -31,6 +31,18 @@ class CohortController(private val cohortService: CohortService) {
         return ResponseEntity.ok(cohorts)
     }
 
+    @GetMapping("/trash")
+    fun getTrashedCohorts(
+        @RequestParam(required = false) websiteId: UUID?,
+    ): ResponseEntity<List<CohortDto>> {
+        val cohorts = if (websiteId != null) {
+            cohortService.getTrashedCohortsByWebsiteId(websiteId)
+        } else {
+            cohortService.getTrashedCohorts()
+        }
+        return ResponseEntity.ok(cohorts)
+    }
+
     @GetMapping("/{id}")
     fun getCohortById(
         @PathVariable id: Long,
@@ -62,5 +74,13 @@ class CohortController(private val cohortService: CohortService) {
     ): ResponseEntity<CohortDto> {
         val restored = cohortService.restoreCohort(id)
         return if (restored != null) ResponseEntity.ok(restored) else ResponseEntity.notFound().build()
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    fun hardDeleteCohort(
+        @PathVariable id: Long,
+    ): ResponseEntity<Void> {
+        val deleted = cohortService.hardDeleteCohort(id)
+        return if (deleted) ResponseEntity.noContent().build() else ResponseEntity.notFound().build()
     }
 }

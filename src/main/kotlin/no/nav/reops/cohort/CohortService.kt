@@ -17,10 +17,6 @@ class CohortService(
 
     @Transactional
     fun createCohort(request: CreateCohortRequest): CohortDto {
-        if (cohortRepository.existsByNameAndWebsiteId(request.name, request.websiteId)) {
-            throw IllegalArgumentException("Cohort with name '${request.name}' already exists for this website")
-        }
-
         val entity = CohortEntity(
             websiteId = request.websiteId,
             name = request.name,
@@ -40,16 +36,19 @@ class CohortService(
         cohortRepository.findAllByWebsiteIdAndDeletedAtIsNull(websiteId).map { it.toDto() }
 
     @Transactional(readOnly = true)
+    fun getTrashedCohorts(): List<CohortDto> = cohortRepository.findAllByDeletedAtIsNotNull().map { it.toDto() }
+
+    @Transactional(readOnly = true)
+    fun getTrashedCohortsByWebsiteId(websiteId: UUID): List<CohortDto> =
+        cohortRepository.findAllByWebsiteIdAndDeletedAtIsNotNull(websiteId).map { it.toDto() }
+
+    @Transactional(readOnly = true)
     fun getCohortById(id: Long): CohortDetailDto? =
         cohortRepository.findActiveById(id)?.toDetailDto()
 
     @Transactional
     fun updateCohort(id: Long, request: UpdateCohortRequest): CohortDto? {
         val entity = cohortRepository.findActiveById(id) ?: return null
-
-        if (entity.name != request.name && cohortRepository.existsByNameAndWebsiteId(request.name, request.websiteId)) {
-            throw IllegalArgumentException("Cohort with name '${request.name}' already exists for this website")
-        }
 
         entity.name = request.name
         entity.description = request.description
@@ -76,6 +75,19 @@ class CohortService(
         val restored = cohortRepository.save(entity)
         changeService.createChange(id, EntityType.COHORT, ChangeType.UPDATED)
         return restored.toDto()
+    }
+
+    /**
+     * Permanently removes a cohort. Only allowed for cohorts already
+     * soft-deleted (i.e. sitting in the trash) — enforces the 2-step
+     * delete flow (delete -> trash -> permanently delete).
+     */
+    @Transactional
+    fun hardDeleteCohort(id: Long): Boolean {
+        val entity = cohortRepository.findDeletedById(id) ?: return false
+        cohortRepository.delete(entity)
+        changeService.createChange(id, EntityType.COHORT, ChangeType.DELETED)
+        return true
     }
 
     private fun CohortEntity.toDto(): CohortDto {

@@ -6,16 +6,12 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
 
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-@Table(
-    name = "cohorts",
-    uniqueConstraints = [UniqueConstraint(name = "uq_cohorts_name_website", columnNames = ["name", "website_id"])],
-)
+@Table(name = "cohorts")
 class CohortEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
     @Column(name = "website_id", nullable = false) var websiteId: UUID,

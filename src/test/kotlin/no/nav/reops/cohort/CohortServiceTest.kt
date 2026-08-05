@@ -5,7 +5,6 @@ import no.nav.reops.change.ChangeService
 import no.nav.reops.change.ChangeType
 import no.nav.reops.change.EntityType
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -13,7 +12,6 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
@@ -45,7 +43,6 @@ class CohortServiceTest {
     @Test
     fun `createCohort saves entity and returns dto`() {
         val saved = cohort(id = 1L, name = "Test cohort", description = "desc")
-        whenever(cohortRepository.existsByNameAndWebsiteId("Test cohort", websiteId)).thenReturn(false)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(saved)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(
             changeDto(1L, ChangeType.CREATED)
@@ -66,18 +63,6 @@ class CohortServiceTest {
         assertThat(result.id).isEqualTo(1L)
         assertThat(result.name).isEqualTo("Test cohort")
         assertThat(result.changedByEmail).isEqualTo("test@nav.no")
-    }
-
-    @Test
-    fun `createCohort throws when name already exists`() {
-        whenever(cohortRepository.existsByNameAndWebsiteId("Existing", websiteId)).thenReturn(true)
-
-        assertThatThrownBy {
-            cohortService.createCohort(CreateCohortRequest(websiteId = websiteId, name = "Existing"))
-        }.isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("Existing")
-
-        verify(cohortRepository, never()).save(any<CohortEntity>())
-        verifyNoInteractions(changeService)
     }
 
     @Test
@@ -170,7 +155,6 @@ class CohortServiceTest {
     fun `updateCohort saves changes and returns dto`() {
         val entity = cohort(id = 1L, name = "Old name")
         whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
-        whenever(cohortRepository.existsByNameAndWebsiteId("New name", websiteId)).thenReturn(false)
         whenever(cohortRepository.save(any<CohortEntity>())).thenReturn(entity)
         whenever(changeService.getChangeByEntityIdAndEntityType(1L, EntityType.COHORT)).thenReturn(null)
 
@@ -201,17 +185,6 @@ class CohortServiceTest {
         )
 
         assertThat(result).isNotNull
-    }
-
-    @Test
-    fun `updateCohort throws when new name already exists`() {
-        val entity = cohort(id = 1L, name = "Old name")
-        whenever(cohortRepository.findActiveById(1L)).thenReturn(entity)
-        whenever(cohortRepository.existsByNameAndWebsiteId("Taken", websiteId)).thenReturn(true)
-
-        assertThatThrownBy {
-            cohortService.updateCohort(1L, UpdateCohortRequest(name = "Taken", websiteId = websiteId))
-        }.isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("Taken")
     }
 
     @Test
