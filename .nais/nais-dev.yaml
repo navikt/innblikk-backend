@@ -59,6 +59,13 @@ spec:
     inbound:
       rules:
         - application: umami-start
+  # DEV-ONLY static-token auth escape hatch (LocalDevTokenAuthFilter.kt) — never present in
+  # nais-prod.yaml, that absence is the primary safety gate. See
+  # https://github.com/navikt/innblikk-backend/pull/33 for the full rationale, and
+  # innblikk-frontend's README ("Opprette/rotere BACKEND_TOKEN") for how to create/rotate the
+  # secret via the Nais console (most team members lack kubectl secrets access here).
+  envFrom:
+    - secret: umami-backend-dev-local-token
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
