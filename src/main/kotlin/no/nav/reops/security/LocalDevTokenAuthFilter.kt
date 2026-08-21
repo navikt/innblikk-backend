@@ -62,15 +62,25 @@ private const val LOCAL_DEV_SENTINEL_IDENT = "LOCAL_DEV_SHARED"
  *    allowlist of endpoints (project/dashboard/graph/query/canvas/user-settings CRUD needed to
  *    render the app), never the full API. Notably excludes destructive/bulk operations (e.g.
  *    cohort hard-delete).
- * 6. Any endpoint that accepts free-form SQL text from the client (query create/update) treats
- *    it as untrusted input regardless of which auth path was used — see
- *    `no.nav.reops.query.SqlTextValidator`. Note this backend never executes that SQL against
- *    BigQuery itself (it only stores query *definitions* in Postgres for the frontend to run
- *    later) — actual BigQuery execution, cost estimation, and the same read-only guard live in
- *    innblikk-frontend's `/api/bigquery` routes. There is nothing to "cost estimate" here.
+ * 6. `QueryController` create/update (one of the allowlisted endpoints) treats client-supplied
+ *    SQL text as untrusted regardless of which auth path was used — `QueryService`'s private
+ *    `validateSelectOnly` rejects anything but a single SELECT/WITH statement. This does NOT
+ *    cover every place `sqlText` can be written, though: the canvas WebSocket save/timer/
+ *    dot-voting paths (`CanvasDataService`) accept `sqlText` directly off the incoming payload
+ *    with no equivalent validation — a real gap, not yet closed, scoping this claim to the REST
+ *    Query endpoints only rather than overstating it as a blanket guarantee. Note this backend
+ *    never executes stored `sqlText` against BigQuery itself either way (only stores query
+ *    *definitions* in Postgres for the frontend to run later) — actual BigQuery execution, cost
+ *    estimation, and the read-only guard on that execution path live in innblikk-frontend's
+ *    `/api/bigquery` routes.
  *
- * The resulting principal's identity (`NAVident`, `preferred_username` claims) is ALWAYS
- * [LOCAL_DEV_SENTINEL_IDENT] — a fixed, non-forgeable value, never taken from client input.
+ * See [PR #33](https://github.com/navikt/innblikk-backend/pull/33) for the full design
+ * discussion/rationale behind this feature.
+ *
+ * The resulting principal's identity claims are ALWAYS these two fixed values, never taken
+ * from client input: `NAVident` = [LOCAL_DEV_SENTINEL_IDENT], `preferred_username` =
+ * `"local-dev@local.dev"` (see [doFilterInternal] below — `preferred_username` is a distinct
+ * fixed literal, not also [LOCAL_DEV_SENTINEL_IDENT]).
  *
  * Security-audit finding fixed here (previously): the `X-Dev-Nav-Ident` header was used
  * verbatim as the `NAVident` claim, which meant it wasn't just a cosmetic log label as
@@ -86,7 +96,12 @@ private const val LOCAL_DEV_SENTINEL_IDENT = "LOCAL_DEV_SHARED"
  * claim the rest of the app treats as an identity.
  */
 @Component
-class LocalDevTokenAuthFilter : OncePerRequestFilter() {
+class LocalDevTokenAuthFilter(
+    // Injectable purely for testability — real usage always uses the default (System::getenv),
+    // tests supply a fake lookup instead of mutating real process env vars (which the JVM
+    // doesn't support doing safely/portably mid-process anyway).
+    private val envLookup: (String) -> String? = System::getenv,
+) : OncePerRequestFilter() {
 
     private val logger = LoggerFactory.getLogger(LocalDevTokenAuthFilter::class.java)
 
@@ -95,8 +110,8 @@ class LocalDevTokenAuthFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val configuredToken = System.getenv("DEV_LOCAL_AUTH_TOKEN")
-        val clusterName = System.getenv("NAIS_CLUSTER_NAME") ?: ""
+        val configuredToken = envLookup("DEV_LOCAL_AUTH_TOKEN")
+        val clusterName = envLookup("NAIS_CLUSTER_NAME") ?: ""
         val isProdCluster = clusterName.contains("prod", ignoreCase = true)
 
         if (configuredToken.isNullOrBlank() || isProdCluster) {
@@ -104,7 +119,16 @@ class LocalDevTokenAuthFilter : OncePerRequestFilter() {
             return
         }
 
-        val presentedToken = request.getHeader("Authorization")?.removePrefix("Bearer ")?.trim()
+        // `removePrefix` returns the original string UNCHANGED when the prefix isn't present —
+        // so a bare `Authorization: <token>` header (no "Bearer " scheme at all) would
+        // otherwise authenticate just as well as a properly-scheme'd one. Require the scheme
+        // explicitly (case-insensitively, per RFC 7235 — HTTP auth schemes are case-insensitive)
+        // before extracting the credential.
+        val authHeader = request.getHeader("Authorization")
+        val presentedToken = authHeader
+            ?.takeIf { it.startsWith("Bearer ", ignoreCase = true) }
+            ?.substring("Bearer ".length)
+            ?.trim()
 
         if (presentedToken != null && constantTimeEquals(presentedToken, configuredToken)) {
             // Purely a human-readable log label — NEVER used as an authorization/claim value.
