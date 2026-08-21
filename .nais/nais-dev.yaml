@@ -59,6 +59,20 @@ spec:
     inbound:
       rules:
         - application: umami-start
+  # DEV-ONLY. Backs the static-token auth escape hatch in LocalDevTokenAuthFilter.kt, so a
+  # contributor without naisdevice/Azure AD access (e.g. a designer) can run innblikk-frontend
+  # fully locally against this real dev backend. Deliberately NOT present in nais-prod.yaml —
+  # that absence is the primary safety gate (see LocalDevTokenAuthFilter.kt for the full
+  # threat-model writeup and the additional NAIS_CLUSTER_NAME runtime guard).
+  #
+  # Create/rotate the underlying secret once via:
+  #   kubectl create secret generic umami-backend-dev-local-token \
+  #     --from-literal=DEV_LOCAL_AUTH_TOKEN="$(openssl rand -hex 32)" \
+  #     -n team-researchops --dry-run=client -o yaml | kubectl apply -f -
+  # Then share the value with whoever needs it via a secure channel (password manager vault),
+  # never Slack/email/git. To revoke: rotate the secret value and redeploy.
+  envFrom:
+    - secret: umami-backend-dev-local-token
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
