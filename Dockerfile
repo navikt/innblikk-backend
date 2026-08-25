@@ -20,7 +20,7 @@ RUN ./gradlew nativeCompile --no-daemon -PjavaVersion=25 \
     && strip build/native/nativeCompile/app
 
 # Stage 2: Minimal runtime image (Chainguard wolfi-base, apk-managed glibc/zlib)
-FROM cgr.dev/chainguard/wolfi-base@sha256:02dab76bd852a70556b5b2002195c8a5fdab77d323c433bf6642aab080489795
+FROM cgr.dev/chainguard/wolfi-base@sha256:a31344ab2cb8618db84f535eec56f76f6178b142cb92cb2e48676cc2dcebea72
 LABEL maintainer="team-researchops"
 RUN apk update && apk add --no-cache glibc zlib && rm -rf /var/cache/apk/*
 WORKDIR /app
