@@ -11,6 +11,12 @@ class CohortTreeValidatorTest {
     private fun condition(field: String = "event_name", value: String = "besok") =
         CohortNodeRequest.ConditionNode(field = field, conditionType = ComparisonOperator.EQUALS, value = value)
 
+    private fun paramKeyCondition(
+        paramKey: String = "skjemaId",
+        conditionType: ComparisonOperator = ComparisonOperator.EQUALS,
+        value: String = "nav-004",
+    ) = CohortNodeRequest.ConditionNode(paramKey = paramKey, conditionType = conditionType, value = value)
+
     private fun group(
         combinator: LogicalOperator = LogicalOperator.AND,
         negated: Boolean = false,
@@ -221,6 +227,47 @@ class CohortTreeValidatorTest {
         val violations = violationsOf(root)
 
         assertThat(violations).anyMatch { it.contains("window", ignoreCase = true) }
+    }
+
+        // ─── conditionType validity ──────────────────────────────────────────────
+
+    @Test
+    fun `BETWEEN on created_at is valid`() {
+        val root = group(
+            children = listOf(
+                condition(field = "created_at").copy(
+                    conditionType = ComparisonOperator.BETWEEN,
+                    value = """{"from":"2024-01-01","to":"2024-01-31"}""",
+                ),
+            ),
+        )
+
+        assertThatCode { validator.validate(root) }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `BETWEEN on a field other than created_at is rejected`() {
+        val root = group(children = listOf(condition(field = "event_name").copy(conditionType = ComparisonOperator.BETWEEN)))
+
+        val violations = violationsOf(root)
+
+        assertThat(violations).anyMatch { it.contains("BETWEEN", ignoreCase = false) }
+    }
+
+    @Test
+    fun `EXISTS on a paramKey condition is valid`() {
+        val root = group(children = listOf(paramKeyCondition(conditionType = ComparisonOperator.EXISTS, value = "")))
+
+        assertThatCode { validator.validate(root) }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `EXISTS on a field condition is rejected`() {
+        val root = group(children = listOf(condition().copy(conditionType = ComparisonOperator.EXISTS)))
+
+        val violations = violationsOf(root)
+
+        assertThat(violations).anyMatch { it.contains("EXISTS", ignoreCase = false) }
     }
 
     // ─── Multiple violations collected together ─────────────────────────────

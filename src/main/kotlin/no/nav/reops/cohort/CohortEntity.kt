@@ -39,4 +39,10 @@ enum class ComparisonOperator {
     NOT_IN_SET,
     /** Only valid on the `created_at` field — see CohortTreeValidator. Value is a JSON `{from, to}` pair. */
     BETWEEN,
+    /**
+     * Only valid on a `paramKey` condition (never `field`) — see CohortTreeValidator.
+     * Matches when the event parameter key is present at all, regardless of its value
+     * («Sjekk bare at detaljen finnes» in the cohort editor UI). `value` is ignored.
+     */
+    EXISTS,
 }

@@ -12,6 +12,8 @@ class CohortTreeValidationException(val violations: List<String>) :
  * - every ConditionNode must set exactly one of field/paramKey
  * - SequenceNode anchor/target subtrees must not contain CohortRefNode or nested SequenceNode
  * - SequenceNode windowValue must be positive
+ * - conditionType BETWEEN is only valid for the created_at field
+ * - conditionType EXISTS is only valid on a paramKey condition (never a field condition)
  *
  * All violations are collected and reported together (not fail-fast).
  */
@@ -72,6 +74,12 @@ class CohortTreeValidator(
                     violations.add(
                         "a condition at depth $depth uses BETWEEN, which is only valid for the created_at field " +
                             "(had field=${node.field})",
+                    )
+                }
+                if (node.conditionType == ComparisonOperator.EXISTS && !hasParamKey) {
+                    violations.add(
+                        "a condition at depth $depth uses EXISTS, which is only valid on a paramKey condition " +
+                            "(had field=${node.field}, paramKey=${node.paramKey})",
                     )
                 }
             }
