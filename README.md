@@ -3,6 +3,8 @@
 ### Prerequisites
 
 - Java 25
+- Colima
+- Docker CLI with the Compose plugin (`docker compose`)
 
 ### Build the project
 
@@ -13,19 +15,29 @@
 
 ### Run locally
 
-**1. Start the database**
+**1. Start Colima**
 
 ```bash
-docker compose up
+colima start --cpu 4 --memory 16 --disk 100
+```
+
+If `docker` is not installed, install the Docker CLI first; Colima provides the runtime, not the command.
+
+**2. Start the database**
+
+```bash
+docker compose -f .compose/docker-compose.yaml up
 ```
 
 > If Flyway migrations fail (e.g. after a schema change on the feature branch), wipe the volume and restart:
 >
 > ```bash
-> docker compose down -v && docker compose up
+> docker compose -f .compose/docker-compose.yaml down -v && docker compose -f .compose/docker-compose.yaml up
 > ```
 
-**2. Start the application**
+> On macOS, Colima provides the container engine for these `docker compose` commands.
+
+**3. Start the application**
 
 ```bash
 ./gradlew bootRun
@@ -33,7 +45,7 @@ docker compose up
 
 Flyway runs automatically on startup and applies any pending migrations.
 
-**3. Verify**
+**4. Verify**
 
 - Swagger UI: http://localhost:8086/api/swagger-ui/index.html
 - Optional: [Bruno collection](https://github.com/navikt/reops-meta/tree/main/tooling/researchops-bruno/start-umami-backend)
@@ -87,7 +99,7 @@ process ran out of memory") well under 8GB for this app. Give colima real headro
 colima start --cpu 4 --memory 16 --disk 100
 ```
 
-If colima is already wedged (`docker ps` hangs or prints nothing, builds silently stall):
+If Colima is already wedged (`docker ps` hangs or prints nothing, builds silently stall):
 
 ```bash
 colima stop
@@ -104,8 +116,8 @@ from the repo root instead, which reliably streams output and isolates Compose f
 Run the real thing locally instead:
 
 ```bash
-docker compose down -v
-docker compose --profile native up --build
+docker compose -f .compose/docker-compose.yaml down -v
+docker compose -f .compose/docker-compose.yaml --profile native up --build
 ```
 
 `--profile native` opts the `app` service into the run (kept out of the default `docker compose up`
@@ -133,7 +145,7 @@ If output looks stalled, BuildKit hides the `RUN ./gradlew nativeCompile` step's
 use `BUILDKIT_PROGRESS=plain` to see it, and expect it to take several minutes:
 
 ```bash
-BUILDKIT_PROGRESS=plain docker compose --profile native up --build
+BUILDKIT_PROGRESS=plain docker compose -f .compose/docker-compose.yaml --profile native up --build
 ```
 
 If it fails with something like `Cannot construct instance of ...: cannot deserialize from Object

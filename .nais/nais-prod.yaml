@@ -58,7 +58,7 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: umami-start
+        - application: reops-innblikk-frontend
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes

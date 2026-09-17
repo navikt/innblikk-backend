@@ -58,10 +58,7 @@ spec:
   accessPolicy:
     inbound:
       rules:
-        - application: umami-start
-  # Dev-only static-token auth — see LocalDevTokenAuthFilter.kt. Never mount in prod.
-  envFrom:
-    - secret: innblikk-dev-local-token
+        - application: reops-innblikk-frontend
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
