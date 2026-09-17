@@ -59,6 +59,9 @@ spec:
     inbound:
       rules:
         - application: reops-innblikk-frontend
+  # Dev-only static-token auth — see LocalDevTokenAuthFilter.kt. Never mount in prod.
+  envFrom:
+    - secret: innblikk-dev-local-token
   env:
     - name: SPRING_PROFILES_ACTIVE
       value: kubernetes
