@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${NAIS_DATABASE_REOPS_INNBLIKK_BACKEND_START_UMAMI_JDBC_URL}
+    url: ${NAIS_DATABASE_REOPS_INNBLIKK_BACKEND_INNBLIKK_JDBC_URL}
   security:
     oauth2:
       resourceserver:

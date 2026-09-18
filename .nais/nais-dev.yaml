@@ -42,7 +42,7 @@ spec:
         diskAutoresize: true
         autoBackupHour: 3
         databases:
-          - name: start-umami
+          - name: innblikk
         maintenance:
           day: 1
           hour: 4
