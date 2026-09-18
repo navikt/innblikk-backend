@@ -1,7 +1,7 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: start-umami-backend
+  name: reops-innblikk-backend
   namespace: team-researchops
   labels:
     team: team-researchops
