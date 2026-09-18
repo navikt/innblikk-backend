@@ -1,4 +1,10 @@
-# Getting Started
+# Innblikk
+
+Innblikk er et analyseverktøy for å måle brukeradferd, bygget av Team ResearchOps.
+
+Spørsmål? Slack: [#researchops](https://nav-it.slack.com/archives/C02UGFS2J4B) eller opprett et issue her på GitHub.
+
+---
 
 ### Prerequisites
 
