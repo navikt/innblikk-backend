@@ -1,5 +1,5 @@
-name: "Pull request"
-run-name: "Pull request"
+name: "CI"
+run-name: "CI @ ${{ github.ref_name }}"
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - main
     paths-ignore:
       - '.compose/**'
+  workflow_call:
 
 jobs:
   test:
@@ -21,11 +22,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '25'
+          cache: gradle
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v6
-        with:
-          cache-disabled: true
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew clean build
+        run: ./gradlew clean build --build-cache
