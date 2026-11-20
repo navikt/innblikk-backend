@@ -1,0 +1,24 @@
+name: "Check docker build"
+run-name: "Check docker build @ ${{ github.ref_name }}"
+
+# Optional manual check that the native production image builds, to catch GraalVM
+# problems before merge. Pick the branch under "Use workflow from".
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: check-docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-docker-build:
+    name: "Check docker build"
+    uses: navikt/reops-workflows/.github/workflows/build.yaml@v1
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+    with:
+      push: false
+      runner: ubuntu-latest-8-cores
+      build-args: CI=true

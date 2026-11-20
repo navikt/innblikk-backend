@@ -1,5 +1,4 @@
 name: "CI"
-run-name: "CI @ ${{ github.ref_name }}"
 
 on:
   pull_request:
@@ -8,6 +7,11 @@ on:
     paths-ignore:
       - '.compose/**'
   workflow_call:
+    inputs:
+      ref:
+        description: 'Branch, tag or commit to check. Defaults to the triggering commit.'
+        type: string
+        default: ''
 
 jobs:
   test:
@@ -17,6 +21,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
       - name: JDK
         uses: actions/setup-java@v5
         with:
