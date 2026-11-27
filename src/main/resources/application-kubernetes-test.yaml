@@ -1,0 +1,3 @@
+spring:
+  datasource:
+    url: ${NAIS_DATABASE_REOPS_INNBLIKK_BACKEND_TEST_INNBLIKK_JDBC_URL}

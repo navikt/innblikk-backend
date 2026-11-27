@@ -1,0 +1,62 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: reops-innblikk-backend-test
+  namespace: team-researchops
+  labels:
+    team: team-researchops
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  image: "{{ image }}"
+  port: 8080
+  liveness:
+    path: /internal/health
+    initialDelay: 30
+  readiness:
+    path: /internal/health
+    initialDelay: 5
+  replicas:
+    min: 1
+    max: 1
+  ingresses:
+    - https://innblikk-backend-test.ansatt.dev.nav.no
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+  resources:
+    limits:
+      memory: 524Mi
+    requests:
+      cpu: "400m"
+      memory: 256Mi
+  gcp:
+    sqlInstances:
+      - name: reops-innblikk-backend-test
+        type: POSTGRES_18
+        tier: db-f1-micro
+        databases:
+          - name: innblikk
+        cascadingDelete: false
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      tenant: nav.no
+    sidecar:
+      enabled: true
+      autoLogin: false
+  accessPolicy:
+    inbound:
+      rules:
+        - application: reops-innblikk-frontend-test
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: kubernetes,kubernetes-test
+    - name: JAVA_TOOL_OPTIONS
+      value: >-
+        -XX:+UseZGC
+        -XX:MaxRAMPercentage=70
+        -XX:InitialRAMPercentage=50
+        -XX:+ExitOnOutOfMemoryError
